@@ -1,0 +1,123 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Вхід в систему - {{ block.super }}{% endblock %}
+
+{% block main_classes %}{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-heart-pulse text-primary" style="font-size: 3rem;"></i>
+                            <h2 class="card-title mt-3">Вхід в систему</h2>
+                            <p class="text-muted">Центр реабілітації</p>
+                        </div>
+                        
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person me-1"></i>Ім'я користувача або email
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="username" 
+                                       name="username" 
+                                       required 
+                                       autocomplete="username"
+                                       value="{{ request.POST.username|default:'' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>Пароль
+                                </label>
+                                <input type="password" 
+                                       class="form-control form-control-lg" 
+                                       id="password" 
+                                       name="password" 
+                                       required 
+                                       autocomplete="current-password">
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember">
+                                <label class="form-check-label" for="remember">
+                                    Запам'ятати мене
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Увійти
+                            </button>
+                            
+                            <div class="text-center">
+                                <a href="{% url 'core:password_reset' %}" class="text-decoration-none">
+                                    Забули пароль?
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Security Notice -->
+                <div class="alert alert-info mt-3" role="alert">
+                    <i class="bi bi-shield-check me-2"></i>
+                    <strong>Безпека:</strong> 
+                    Всі дані захищені SSL шифруванням. 
+                    Після 5 невдалих спроб входу аккаунт буде тимчасово заблокований.
+                </div>
+                
+                <!-- Demo Accounts (тільки для розробки) -->
+                {% if debug %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Тестові аккаунти</h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <strong>Адміністратор:</strong> admin / admin123<br>
+                            <strong>Терапевт:</strong> doctor / doctor123<br>
+                            <strong>Пацієнт:</strong> patient / patient123
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Автофокус на поле username
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('username').focus();
+});
+
+// Покращена валідація форми
+document.querySelector('form').addEventListener('submit', function(e) {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (!username || !password) {
+        e.preventDefault();
+        alert('Будь ласка, заповніть всі поля.');
+        return false;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Пароль повинен містити принаймні 6 символів.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

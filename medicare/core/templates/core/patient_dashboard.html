@@ -1,0 +1,270 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Панель пацієнта - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="bi bi-person-circle text-primary me-2"></i>
+                Вітаємо, {{ patient.user.get_full_name }}!
+            </h1>
+            <div class="badge bg-success fs-6">Пацієнт</div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ stats.active_programs }}</h5>
+                        <p class="card-text">Активні програми</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-clipboard-check" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ stats.upcoming_appointments }}</h5>
+                        <p class="card-text">Найближчі прийоми</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-calendar-event" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ stats.total_progress_logs }}</h5>
+                        <p class="card-text">Записи прогресу</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ stats.assigned_doctors }}</h5>
+                        <p class="card-text">Призначені лікарі</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-person-badge" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Найближчі прийоми -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event text-primary me-2"></i>
+                    Найближчі прийоми
+                </h5>
+                <a href="{% url 'consultation:patient_consultations' %}" class="btn btn-sm btn-outline-primary">
+                    Всі прийоми
+                </a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_appointments %}
+                    {% for appointment in upcoming_appointments %}
+                        <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div>
+                                <div class="fw-bold">{{ appointment.doctor.user.get_full_name }}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>{{ appointment.start_time|date:"d.m.Y" }}
+                                    <i class="bi bi-clock ms-2 me-1"></i>{{ appointment.start_time|time:"H:i" }}
+                                </small>
+                                <div class="small text-muted">{{ appointment.get_consultation_type_display }}</div>
+                            </div>
+                            <span class="badge bg-{{ appointment.status|yesno:'success,warning,secondary' }}">
+                                {{ appointment.get_status_display }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Немає запланованих прийомів</p>
+                        <a href="{% url 'consultation:patient_consultation_request' %}" class="btn btn-primary">
+                            Записатися на прийом
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Активні програми -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clipboard-check text-success me-2"></i>
+                    Активні програми реабілітації
+                </h5>
+                <a href="{% url 'programs:patient_programs' %}" class="btn btn-sm btn-outline-success">
+                    Всі програми
+                </a>
+            </div>
+            <div class="card-body">
+                {% if active_programs %}
+                    {% for program in active_programs %}
+                        <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="#" 
+                                           class="text-decoration-none">
+                                            {{ program.title }}
+                                        </a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        Терапевт: {{ program.doctor.user.get_full_name }}
+                                    </small>
+                                    <div class="small text-muted">
+                                        {{ program.start_date|date:"d.m.Y" }} - {{ program.end_date|date:"d.m.Y" }}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted">Прогрес</div>
+                                    <div class="progress" style="width: 80px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ program.progress_percentage }}%"
+                                             aria-valuenow="{{ program.progress_percentage }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ program.progress_percentage }}%</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-clipboard-x" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Немає активних програм реабілітації</p>
+                        <small>Зверніться до свого терапевта для призначення програми</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Останній прогрес -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up text-info me-2"></i>
+                    Останні записи прогресу
+                </h5>
+                <a href="{% url 'progress:patient_progress' patient.id %}" class="btn btn-sm btn-outline-info">
+                    Переглянути всі
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_progress %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Тип</th>
+                                    <th>Терапевт</th>
+                                    <th>Примітки</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progress in recent_progress %}
+                                    <tr>
+                                        <td>{{ progress.date|date:"d.m.Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {% if progress.completed %}Завершено{% else %}Не завершено{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ progress.program.doctor.user.get_full_name }}</td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 200px;">
+                                                {{ progress.notes|truncatewords:10 }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="#" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Поки що немає записів прогресу</p>
+                        <small>Записи прогресу будуть з'являтися після сеансів з терапевтом</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Оновлення прогрес-барів з анімацією
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-in-out';
+            bar.style.width = width;
+        }, 100);
+    });
+});
+
+// Автооновлення сторінки кожні 5 хвилин для отримання актуальної інформації
+setInterval(() => {
+    window.location.reload();
+}, 300000); // 5 хвилин
+</script>
+{% endblock %}

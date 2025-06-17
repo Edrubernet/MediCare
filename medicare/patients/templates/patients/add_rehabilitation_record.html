@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Додати запис реабілітації{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Новий запис реабілітації - {{ patient.user.get_full_name }}</h4>
+            <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_injury_type" class="form-label">Тип травми/захворювання <span class="text-danger">*</span></label>
+                            {{ form.injury_type }}
+                            {% if form.injury_type.errors %}
+                                <div class="text-danger">{{ form.injury_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_injury_date" class="form-label">Дата травми/початку захворювання</label>
+                            {{ form.injury_date }}
+                            {% if form.injury_date.errors %}
+                                <div class="text-danger">{{ form.injury_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_doctor" class="form-label">Лікар</label>
+                            {{ form.doctor }}
+                            {% if form.doctor.errors %}
+                                <div class="text-danger">{{ form.doctor.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_diagnosis" class="form-label">Діагноз <span class="text-danger">*</span></label>
+                            {{ form.diagnosis }}
+                            {% if form.diagnosis.errors %}
+                                <div class="text-danger">{{ form.diagnosis.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_notes" class="form-label">Додаткові нотатки</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Важливо:</strong> Запис реабілітації допоможе відстежувати прогрес пацієнта 
+                    та планувати подальше лікування. Заповнюйте поля якомога детальніше.
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">
+                        Скасувати
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Додати запис
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

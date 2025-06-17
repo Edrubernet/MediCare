@@ -1,0 +1,365 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Прогрес програми: {{ program.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Прогрес програми: {{ program.title }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'programs:program_list' %}">Програми</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'programs:program_detail' program.id %}">{{ program.title }}</a></li>
+                    <li class="breadcrumb-item active">Прогрес</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <span class="badge fs-6 
+                {% if program.status == 'active' %}bg-success
+                {% elif program.status == 'completed' %}bg-primary
+                {% elif program.status == 'paused' %}bg-warning
+                {% elif program.status == 'cancelled' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ program.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Program Overview -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        Огляд програми
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Пацієнт:</strong></p>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ program.patient.user.first_name|first }}{{ program.patient.user.last_name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ program.patient.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ program.patient.user.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p><strong>Період програми:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                {{ program.start_date|date:"d.m.Y" }} - 
+                                {% if program.end_date %}
+                                    {{ program.end_date|date:"d.m.Y" }}
+                                {% else %}
+                                    Не обмежено
+                                {% endif %}
+                            </p>
+                            
+                            <p><strong>Частота:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ program.sessions_per_week }} раз/тиждень, {{ program.session_duration }} хв
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise Sessions -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity text-success me-2"></i>
+                        Сеанси тренувань
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="filterSessions('all')">
+                            Всі
+                        </button>
+                        <button class="btn btn-outline-success" onclick="filterSessions('completed')">
+                            Завершені
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="filterSessions('pending')">
+                            Незавершені
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if sessions %}
+                        <div id="sessions-container">
+                            {% for session in sessions %}
+                                <div class="session-item border-bottom py-3 {% if not forloop.last %}mb-3{% endif %}" 
+                                     data-status="{% if session.completed %}completed{% else %}pending{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <h6 class="mb-0 me-3">
+                                                    <i class="bi bi-calendar-date me-1"></i>
+                                                    {{ session.date|date:"d.m.Y" }}
+                                                </h6>
+                                                <span class="badge {% if session.completed %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if session.completed %}Завершено{% else %}Не завершено{% endif %}
+                                                </span>
+                                            </div>
+                                            
+                                            {% if session.notes %}
+                                                <p class="text-muted mb-2">
+                                                    <i class="bi bi-chat-left-text me-1"></i>
+                                                    {{ session.notes }}
+                                                </p>
+                                            {% endif %}
+                                            
+                                            <!-- Exercise Completions -->
+                                            {% if session.exercise_completions.exists %}
+                                                <div class="mt-2">
+                                                    <small class="text-muted d-block mb-1">Виконані вправи:</small>
+                                                    <div class="row g-2">
+                                                        {% for completion in session.exercise_completions.all %}
+                                                            <div class="col-md-6">
+                                                                <div class="card card-body p-2 bg-light">
+                                                                    <small class="fw-bold">{{ completion.program_exercise.exercise.title }}</small>
+                                                                    <div class="d-flex justify-content-between">
+                                                                        <small class="text-muted">
+                                                                            {{ completion.sets_completed }}x{{ completion.repetitions_completed }}
+                                                                        </small>
+                                                                        <div>
+                                                                            <small class="badge bg-info">Біль: {{ completion.pain_level }}/10</small>
+                                                                            <small class="badge bg-secondary">Складність: {{ completion.difficulty_level }}/10</small>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <small class="text-muted d-block">{{ session.created_at|date:"H:i" }}</small>
+                                            {% if not session.completed and request.user == program.patient.user %}
+                                                <button class="btn btn-sm btn-success mt-1" 
+                                                        onclick="completeSession({{ session.id }})">
+                                                    <i class="bi bi-check"></i> Завершити
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div id="no-sessions-message" class="text-center py-4 d-none">
+                            <i class="bi bi-filter" style="font-size: 2rem;" class="text-muted"></i>
+                            <p class="text-muted mt-2">Немає сеансів за обраним фільтром</p>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="text-muted mt-3">Сеанси тренувань ще не записані</h6>
+                            <p class="text-muted">Почніть виконувати програму, щоб відстежувати прогрес</p>
+                            {% if request.user == program.patient.user %}
+                                <a href="{% url 'progress:start_session' %}" class="btn btn-primary">
+                                    <i class="bi bi-play"></i> Почати сеанс
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Progress Statistics -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart text-success me-2"></i>
+                        Статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Загальний прогрес:</span>
+                            <span class="fw-bold">{{ program.progress_percentage|default:0 }}%</span>
+                        </div>
+                        <div class="progress mt-1">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ program.progress_percentage|default:0 }}%" 
+                                 aria-valuenow="{{ program.progress_percentage|default:0 }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h6 class="text-primary mb-0">{{ sessions.count }}</h6>
+                                <small class="text-muted">Всього сеансів</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-success mb-0">
+                                {% with completed_sessions=sessions|length %}
+                                    {% for session in sessions %}
+                                        {% if session.completed and forloop.first %}1{% elif session.completed and not forloop.first %}{{ forloop.counter }}{% endif %}
+                                    {% empty %}0{% endfor %}
+                                {% endwith %}
+                            </h6>
+                            <small class="text-muted">Завершено</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    {% if sessions %}
+                        <div class="mb-2">
+                            <small class="text-muted">Останній сеанс:</small>
+                            <p class="mb-1">{{ sessions.first.date|date:"d.m.Y" }}</p>
+                        </div>
+                        
+                        {% if sessions.first.completed %}
+                            <div class="mb-2">
+                                <small class="text-muted">Середній рівень болю:</small>
+                                <p class="mb-1">
+                                    {% with avg_pain=sessions.first.exercise_completions.all|length %}
+                                        {% for completion in sessions.first.exercise_completions.all %}
+                                            {{ completion.pain_level }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning text-warning me-2"></i>
+                        Швидкі дії
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if request.user == program.patient.user %}
+                            <a href="{% url 'progress:start_session' %}" class="btn btn-success">
+                                <i class="bi bi-play"></i> Почати новий сеанс
+                            </a>
+                            <a href="{% url 'progress:upload_photo' %}" class="btn btn-info">
+                                <i class="bi bi-camera"></i> Завантажити фото прогресу
+                            </a>
+                        {% endif %}
+                        
+                        {% if request.user == program.doctor.user or request.user.user_type == 'admin' %}
+                            <a href="{% url 'progress:create_note' %}" class="btn btn-warning">
+                                <i class="bi bi-journal-plus"></i> Додати нотатку
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'progress:export_progress' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-download"></i> Експорт даних
+                        </a>
+                        
+                        <a href="{% url 'programs:program_detail' program.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад до програми
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterSessions(status) {
+    const sessions = document.querySelectorAll('.session-item');
+    const noSessionsMessage = document.getElementById('no-sessions-message');
+    let visibleCount = 0;
+    
+    sessions.forEach(session => {
+        if (status === 'all' || session.dataset.status === status) {
+            session.style.display = 'block';
+            visibleCount++;
+        } else {
+            session.style.display = 'none';
+        }
+    });
+    
+    if (visibleCount === 0) {
+        noSessionsMessage.classList.remove('d-none');
+    } else {
+        noSessionsMessage.classList.add('d-none');
+    }
+    
+    // Update button states
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+function completeSession(sessionId) {
+    if (confirm('Позначити цей сеанс як завершений?')) {
+        fetch(`/progress/session/${sessionId}/complete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ completed: true })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Помилка при завершенні сеансу');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Помилка при завершенні сеансу');
+        });
+    }
+}
+
+// Progress bar animation
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const width = progressBar.style.width;
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.transition = 'width 1s ease-in-out';
+            progressBar.style.width = width;
+        }, 100);
+    }
+    
+    // Set default filter to 'all'
+    document.querySelector('.btn-group .btn').classList.add('active');
+});
+</script>
+{% endblock %}

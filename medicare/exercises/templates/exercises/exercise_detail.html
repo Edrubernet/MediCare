@@ -1,0 +1,505 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ exercise.title }} - Деталі вправи{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Exercise Details -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ exercise.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Video Section -->
+                    {% if exercise.video %}
+                        <div class="mb-4">
+                            <video class="w-100" controls style="max-height: 400px;">
+                                <source src="{{ exercise.video.url }}" type="video/mp4">
+                                Ваш браузер не підтримує відео.
+                            </video>
+                        </div>
+                    {% elif exercise.video_thumbnail %}
+                        <div class="mb-4">
+                            <img src="{{ exercise.video_thumbnail.url }}" class="img-fluid" 
+                                 alt="{{ exercise.title }}" style="max-height: 400px;">
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Description -->
+                    <h5>Опис</h5>
+                    <p class="lead">{{ exercise.description }}</p>
+                    
+                    <!-- Instructions -->
+                    <h5>Загальні інструкції</h5>
+                    <div class="bg-light p-3 rounded">
+                        {{ exercise.instructions|linebreaks }}
+                    </div>
+                    
+                    <!-- Exercise Steps -->
+                    {% if exercise.steps.all %}
+                        <h5 class="mt-4">Покрокові інструкції</h5>
+                        <div class="exercise-steps">
+                            {% for step in exercise.steps.all %}
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-list-ol"></i> Крок {{ step.step_number }}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-{% if step.image %}8{% else %}12{% endif %}">
+                                                <p class="mb-0">{{ step.instruction|linebreaks }}</p>
+                                            </div>
+                                            {% if step.image %}
+                                                <div class="col-md-4">
+                                                    <img src="{{ step.image.url }}" 
+                                                         alt="Крок {{ step.step_number }}" 
+                                                         class="img-fluid rounded border"
+                                                         style="max-height: 200px; width: 100%; object-fit: cover;">
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Precautions -->
+                    {% if exercise.precautions %}
+                        <h5 class="mt-4">Застереження</h5>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ exercise.precautions|linebreaks }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Exercise Images -->
+                    {% if exercise.images.all %}
+                        <h5 class="mt-4">Додаткові зображення</h5>
+                        <div class="row">
+                            {% for image in exercise.images.all %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <img src="{{ image.image.url }}" class="card-img-top" 
+                                             alt="{{ image.caption|default:exercise.title }}">
+                                        {% if image.caption %}
+                                            <div class="card-body p-2">
+                                                <small class="text-muted">{{ image.caption }}</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Related Educational Materials -->
+            {% if exercise.educational_materials.all %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Пов'язані навчальні матеріали</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for material in exercise.educational_materials.all %}
+                                <div class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">{{ material.title }}</div>
+                                        <p class="mb-1">{{ material.description|truncatechars:100 }}</p>
+                                        <small class="text-muted">{{ material.get_file_type_display }}</small>
+                                    </div>
+                                    <a href="{{ material.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-download"></i> Завантажити
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Exercise Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Інформація про вправу</h5>
+                </div>
+                <div class="card-body">
+                    {% if exercise.difficulty %}
+                        <p><strong>Рівень складності:</strong></p>
+                        <span class="badge bg-info mb-3">{{ exercise.difficulty.name }}</span>
+                    {% endif %}
+                    
+                    <p><strong>Частини тіла:</strong></p>
+                    {% for body_part in exercise.body_parts.all %}
+                        <span class="badge bg-success me-1 mb-1">{{ body_part.name }}</span>
+                    {% endfor %}
+                    
+                    <p class="mt-3"><strong>Категорії:</strong></p>
+                    {% for category in exercise.categories.all %}
+                        <span class="badge bg-secondary me-1 mb-1">{{ category.name }}</span>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <p><strong>Створено:</strong> {{ exercise.created_at|date:"d.m.Y H:i" }}</p>
+                    {% if exercise.created_by %}
+                        <p><strong>Автор:</strong> {{ exercise.created_by.get_full_name }}</p>
+                    {% endif %}
+                    <p><strong>Публічна:</strong> 
+                        {% if exercise.is_public %}
+                            <span class="text-success"><i class="fas fa-check"></i> Так</span>
+                        {% else %}
+                            <span class="text-warning"><i class="fas fa-times"></i> Ні</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Дії</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="addToProgram({{ exercise.id }})">
+                            <i class="fas fa-plus"></i> Додати до програми
+                        </button>
+                        {% if exercise.created_by == request.user or request.user.is_staff %}
+                            <a href="{% url 'exercises:exercise_update' exercise.id %}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Редагувати
+                            </a>
+                            <a href="{% url 'exercises:exercise_delete' exercise.id %}" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Видалити
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'exercises:exercise_library' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> Всі вправи
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding Exercise to Program -->
+<div class="modal fade" id="addToProgramModal" tabindex="-1" aria-labelledby="addToProgramModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addToProgramModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Додати вправу до програми
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="programSelection">
+                    <h6>Оберіть програму реабілітації:</h6>
+                    <div id="programsList" class="list-group">
+                        <!-- Programs will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="exerciseSettings" style="display: none;" class="mt-4">
+                    <h6>Налаштування вправи:</h6>
+                    <form id="addExerciseForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sets" class="form-label">Кількість підходів</label>
+                                    <input type="number" class="form-control" id="sets" name="sets" value="3" min="1" max="20">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="repetitions" class="form-label">Повторення</label>
+                                    <input type="number" class="form-control" id="repetitions" name="repetitions" value="10" min="1" max="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="duration" class="form-label">Тривалість (секунди)</label>
+                                    <input type="number" class="form-control" id="duration" name="duration" placeholder="Опціонально" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="rest_between_sets" class="form-label">Відпочинок між підходами (сек)</label>
+                                    <input type="number" class="form-control" id="rest_between_sets" name="rest_between_sets" value="60" min="10" max="300">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="additional_instructions" class="form-label">Додаткові інструкції</label>
+                            <textarea class="form-control" id="additional_instructions" name="additional_instructions" rows="3" placeholder="Особливі рекомендації для виконання цієї вправи..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Дні тижня для виконання</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="0" id="monday" name="days_of_week" checked>
+                                        <label class="form-check-label" for="monday">Понеділок</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="tuesday" name="days_of_week">
+                                        <label class="form-check-label" for="tuesday">Вівторок</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="2" id="wednesday" name="days_of_week" checked>
+                                        <label class="form-check-label" for="wednesday">Середа</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="3" id="thursday" name="days_of_week">
+                                        <label class="form-check-label" for="thursday">Четвер</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="4" id="friday" name="days_of_week" checked>
+                                        <label class="form-check-label" for="friday">П'ятниця</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="5" id="saturday" name="days_of_week">
+                                        <label class="form-check-label" for="saturday">Субота</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="6" id="sunday" name="days_of_week">
+                                        <label class="form-check-label" for="sunday">Неділя</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="addExerciseToProgram" style="display: none;">
+                    <i class="fas fa-plus"></i> Додати вправу
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedProgramDay = null;
+
+function addToProgram(exerciseId) {
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addToProgramModal'));
+    modal.show();
+    
+    // Load available programs
+    loadAvailablePrograms(exerciseId);
+}
+
+function loadAvailablePrograms(exerciseId) {
+    const programsList = document.getElementById('programsList');
+    programsList.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Завантаження програм...</div>';
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') || 
+                     document.querySelector('input[name="csrfmiddlewaretoken"]');
+    
+    fetch('/programs/api/programs/', {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('authToken') || ''),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to load programs');
+        }
+        return response.json();
+    })
+    .then(data => {
+        programsList.innerHTML = '';
+        
+        if (data.results && data.results.length > 0) {
+            data.results.forEach(program => {
+                if (program.status === 'active' || program.status === 'draft') {
+                    const programItem = document.createElement('div');
+                    programItem.className = 'list-group-item list-group-item-action';
+                    programItem.style.cursor = 'pointer';
+                    programItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${program.title}</h6>
+                            <small class="text-muted">${program.patient?.user?.full_name || 'Пацієнт'}</small>
+                        </div>
+                        <p class="mb-1">${program.description || 'Без опису'}</p>
+                        <small class="text-muted">
+                            Статус: ${program.status === 'active' ? 'Активна' : 'Чернетка'} | 
+                            Днів: ${program.program_days?.length || 0}
+                        </small>
+                    `;
+                    
+                    programItem.addEventListener('click', () => {
+                        selectProgram(program, exerciseId);
+                    });
+                    
+                    programsList.appendChild(programItem);
+                }
+            });
+        } else {
+            programsList.innerHTML = `
+                <div class="text-center p-4">
+                    <i class="fas fa-exclamation-triangle text-warning fs-2"></i>
+                    <h6 class="mt-2">Немає доступних програм</h6>
+                    <p class="text-muted">Створіть програму реабілітації, щоб додавати вправи.</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading programs:', error);
+        programsList.innerHTML = `
+            <div class="text-center p-4">
+                <i class="fas fa-exclamation-circle text-danger fs-2"></i>
+                <h6 class="mt-2">Помилка завантаження</h6>
+                <p class="text-muted">Не вдалося завантажити програми. Спробуйте пізніше.</p>
+            </div>
+        `;
+    });
+}
+
+function selectProgram(program, exerciseId) {
+    selectedProgramDay = { program, exerciseId };
+    
+    // Hide program selection, show exercise settings
+    document.getElementById('programSelection').style.display = 'none';
+    document.getElementById('exerciseSettings').style.display = 'block';
+    document.getElementById('addExerciseToProgram').style.display = 'inline-block';
+    
+    // Update modal title
+    document.getElementById('addToProgramModalLabel').innerHTML = `
+        <i class="fas fa-plus-circle me-2"></i>
+        Додати до програми: ${program.title}
+    `;
+    
+    // Set up the add button
+    document.getElementById('addExerciseToProgram').onclick = () => {
+        submitExerciseToProgram();
+    };
+}
+
+function submitExerciseToProgram() {
+    if (!selectedProgramDay) return;
+    
+    const form = document.getElementById('addExerciseForm');
+    const formData = new FormData(form);
+    
+    // Get checked days
+    const daysCheckboxes = document.querySelectorAll('input[name="days_of_week"]:checked');
+    const selectedDays = Array.from(daysCheckboxes).map(cb => parseInt(cb.value));
+    
+    const exerciseData = {
+        exercise_id: selectedProgramDay.exerciseId,
+        program_id: selectedProgramDay.program.id,
+        sets: parseInt(formData.get('sets')),
+        repetitions: parseInt(formData.get('repetitions')),
+        duration: formData.get('duration') ? parseInt(formData.get('duration')) : null,
+        rest_between_sets: parseInt(formData.get('rest_between_sets')),
+        additional_instructions: formData.get('additional_instructions'),
+        days_of_week: selectedDays
+    };
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') ||
+                     document.querySelector('input[name="csrfmiddlewaretoken"]');
+    
+    const addButton = document.getElementById('addExerciseToProgram');
+    addButton.disabled = true;
+    addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Додавання...';
+    
+    // Submit to backend
+    fetch('/programs/add-exercise/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken ? csrfToken.getAttribute('content') || csrfToken.value : '',
+        },
+        body: JSON.stringify(exerciseData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addToProgramModal'));
+            modal.hide();
+            
+            // Reset form
+            resetAddToProgramModal();
+            
+            // Show success message
+            alert('Вправу успішно додано до програми реабілітації!');
+        } else {
+            throw new Error(data.message || 'Помилка при додаванні вправи');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding exercise to program:', error);
+        alert('Помилка при додаванні вправи до програми: ' + error.message);
+    })
+    .finally(() => {
+        addButton.disabled = false;
+        addButton.innerHTML = '<i class="fas fa-plus"></i> Додати вправу';
+    });
+}
+
+function resetAddToProgramModal() {
+    selectedProgramDay = null;
+    document.getElementById('programSelection').style.display = 'block';
+    document.getElementById('exerciseSettings').style.display = 'none';
+    document.getElementById('addExerciseToProgram').style.display = 'none';
+    document.getElementById('addToProgramModalLabel').innerHTML = `
+        <i class="fas fa-plus-circle me-2"></i>
+        Додати вправу до програми
+    `;
+    
+    // Reset form
+    document.getElementById('addExerciseForm').reset();
+    document.getElementById('sets').value = '3';
+    document.getElementById('repetitions').value = '10';
+    document.getElementById('rest_between_sets').value = '60';
+    
+    // Reset checkboxes to default
+    document.querySelectorAll('input[name="days_of_week"]').forEach(cb => cb.checked = false);
+    document.getElementById('monday').checked = true;
+    document.getElementById('wednesday').checked = true;
+    document.getElementById('friday').checked = true;
+}
+
+// Reset modal when it's hidden
+document.getElementById('addToProgramModal').addEventListener('hidden.bs.modal', function () {
+    resetAddToProgramModal();
+});
+</script>
+{% endblock %}

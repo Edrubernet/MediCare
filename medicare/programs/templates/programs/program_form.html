@@ -1,0 +1,206 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Редагувати програму{% else %}Створити програму{% endif %} - Medicare
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        {% if form.instance.pk %}
+                            <i class="fas fa-edit"></i> Редагувати програму
+                        {% else %}
+                            <i class="fas fa-plus"></i> Створити програму реабілітації
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- Основна інформація -->
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">
+                                    Назва програми <span class="text-danger">*</span>
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger small">{{ form.title.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Опис програми <span class="text-danger">*</span>
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Пацієнт та лікар -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.patient.id_for_label }}" class="form-label">
+                                    Пацієнт <span class="text-danger">*</span>
+                                </label>
+                                {{ form.patient }}
+                                {% if form.patient.errors %}
+                                    <div class="text-danger small">{{ form.patient.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.doctor.id_for_label }}" class="form-label">
+                                    Лікар <span class="text-danger">*</span>
+                                </label>
+                                {{ form.doctor }}
+                                {% if form.doctor.errors %}
+                                    <div class="text-danger small">{{ form.doctor.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Дати -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                    Дата початку <span class="text-danger">*</span>
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger small">{{ form.start_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                    Дата завершення
+                                </label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="text-danger small">{{ form.end_date.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Залиште порожнім для програми без обмеження часу</div>
+                            </div>
+                            
+                            <!-- Статус -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    Статус
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger small">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Параметри занять -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.sessions_per_week.id_for_label }}" class="form-label">
+                                    Сесій на тиждень
+                                </label>
+                                {{ form.sessions_per_week }}
+                                {% if form.sessions_per_week.errors %}
+                                    <div class="text-danger small">{{ form.sessions_per_week.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.session_duration.id_for_label }}" class="form-label">
+                                    Тривалість сесії (хв)
+                                </label>
+                                {{ form.session_duration }}
+                                {% if form.session_duration.errors %}
+                                    <div class="text-danger small">{{ form.session_duration.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Цілі -->
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.goals.id_for_label }}" class="form-label">
+                                    Цілі програми
+                                </label>
+                                {{ form.goals }}
+                                {% if form.goals.errors %}
+                                    <div class="text-danger small">{{ form.goals.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Очікувані результати -->
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.expected_outcomes.id_for_label }}" class="form-label">
+                                    Очікувані результати
+                                </label>
+                                {{ form.expected_outcomes }}
+                                {% if form.expected_outcomes.errors %}
+                                    <div class="text-danger small">{{ form.expected_outcomes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'programs:program_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Скасувати
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}Зберегти зміни{% else %}Створити програму{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not form.instance.pk %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Наступні кроки</h5>
+                <p class="mb-0">Після створення програми ви зможете додати до неї вправи та налаштувати детальний план реабілітації.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Встановлюємо сьогоднішню дату як мінімальну для початку програми
+    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+    if (startDateInput && !startDateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.setAttribute('min', today);
+        startDateInput.value = today;
+    }
+    
+    // Валідація дати завершення
+    const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+    if (endDateInput && startDateInput) {
+        startDateInput.addEventListener('change', function() {
+            endDateInput.setAttribute('min', this.value);
+            if (endDateInput.value && endDateInput.value < this.value) {
+                endDateInput.value = '';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

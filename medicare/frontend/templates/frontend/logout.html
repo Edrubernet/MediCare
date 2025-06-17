@@ -1,0 +1,31 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Вихід з системи{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Вихід з системи</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">Ви успішно вийшли з системи MediCare.</p>
+                    <p>Дякуємо за використання нашої платформи!</p>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'frontend:login' %}" class="btn btn-primary">
+                            Увійти знову
+                        </a>
+                        <a href="{% url 'frontend:index' %}" class="btn btn-outline-secondary">
+                            На головну
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

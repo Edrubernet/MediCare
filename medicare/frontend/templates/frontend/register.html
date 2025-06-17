@@ -1,0 +1,245 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Реєстрація - Medicare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Створення облікового запису</h2>
+                    
+                    <div id="alert-container"></div>
+                    
+                    <form id="registration-form">
+                        {% csrf_token %}
+                        
+                        <!-- Тип користувача -->
+                        <div class="mb-4">
+                            <label class="form-label">Тип облікового запису</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <div class="form-check card p-3 text-center h-100">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_patient" value="patient" checked>
+                                        <label class="form-check-label w-100" for="user_type_patient">
+                                            <i class="fas fa-user fa-2x mb-2 text-primary"></i>
+                                            <h5>Пацієнт</h5>
+                                            <p class="text-muted small">Доступ до програм реабілітації та спілкування з лікарями</p>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 text-center h-100">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_doctor" value="doctor">
+                                        <label class="form-check-label w-100" for="user_type_doctor">
+                                            <i class="fas fa-user-md fa-2x mb-2 text-primary"></i>
+                                            <h5>Лікар</h5>
+                                            <p class="text-muted small">Створення програм реабілітації та моніторинг пацієнтів</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Основна інформація -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">Ім'я *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Прізвище *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="patronymic" class="form-label">По-батькові</label>
+                                <input type="text" class="form-control" id="patronymic" name="patronymic">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="form-text">Буде використовуватись для входу в систему</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Пароль *</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password_confirm" class="form-label">Підтвердження паролю *</label>
+                                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Поля для лікаря -->
+                        <div id="doctor-fields" class="mt-4 d-none">
+                            <h4 class="mb-3">Інформація про лікаря</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="specialization" class="form-label">Спеціалізація *</label>
+                                    <input type="text" class="form-control" id="specialization" name="specialization">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="qualification" class="form-label">Кваліфікація</label>
+                                    <input type="text" class="form-control" id="qualification" name="qualification">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="experience" class="form-label">Досвід роботи (років)</label>
+                                <input type="number" class="form-control" id="experience" name="experience" min="0">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">Коротка біографія</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Поля для пацієнта -->
+                        <div id="patient-fields" class="mt-4">
+                            <h4 class="mb-3">Інформація про пацієнта</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="medical_history" class="form-label">Короткий опис проблеми</label>
+                                    <textarea class="form-control" id="medical_history" name="medical_history" rows="3"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="emergency_contact" class="form-label">Контактна особа у разі екстреної ситуації</label>
+                                    <input type="text" class="form-control" id="emergency_contact" name="emergency_contact">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-4 mt-3">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                Я погоджуюсь з <a href="#">умовами використання</a> та <a href="#">політикою конфіденційності</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Зареєструватися</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p>Вже зареєстровані? <a href="/login/">Увійти</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
+    const doctorFields = document.getElementById('doctor-fields');
+    const patientFields = document.getElementById('patient-fields');
+    const specializationInput = document.getElementById('specialization');
+    const form = document.getElementById('registration-form');
+    const alertContainer = document.getElementById('alert-container');
+
+    // Show/hide fields based on user type
+    userTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'doctor') {
+                doctorFields.classList.remove('d-none');
+                patientFields.classList.add('d-none');
+                specializationInput.required = true;
+            } else {
+                doctorFields.classList.add('d-none');
+                patientFields.classList.remove('d-none');
+                specializationInput.required = false;
+            }
+        });
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+
+        if (password !== passwordConfirm) {
+            showAlert('Паролі не співпадають!', 'danger');
+            return;
+        }
+
+        // Collect form data
+        const formData = {
+            password: password,
+            email: document.getElementById('email').value,
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            patronymic: document.getElementById('patronymic').value,
+            user_type: document.querySelector('input[name="user_type"]:checked').value,
+        };
+
+        if (formData.user_type === 'doctor') {
+            formData.doctor_profile = {
+                specialization: specializationInput.value,
+                bio: document.getElementById('bio').value,
+            };
+        } else {
+            formData.patient_profile = {
+                // These fields are not in the serializer, but we'll leave the structure
+            };
+        }
+        
+        try {
+            const response = await fetch('/api/staff/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showAlert('Ви успішно зареєстровані! Тепер ви можете увійти в систему.', 'success');
+                form.reset();
+                setTimeout(() => {
+                    window.location.href = '/login/';
+                }, 3000);
+            } else {
+                // Handle validation errors
+                let errorMessages = '';
+                for (const field in data) {
+                    errorMessages += `<p class="mb-1">${field}: ${Array.isArray(data[field]) ? data[field].join(', ') : data[field]}</p>`;
+                }
+                showAlert(errorMessages, 'danger');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            showAlert('Сталася невідома помилка. Будь ласка, спробуйте ще раз.', 'danger');
+        }
+    });
+
+    function showAlert(message, type) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <div>${message}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        window.scrollTo(0, 0); // Scroll to top to make alert visible
+    }
+});
+</script>
+{% endblock %}

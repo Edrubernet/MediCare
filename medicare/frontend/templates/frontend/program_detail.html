@@ -1,0 +1,725 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Деталі програми - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'frontend:my_programs' %}" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left me-2"></i>Назад до списку
+            </a>
+            <h1 class="h2 d-inline" id="program-title">Завантаження...</h1>
+        </div>
+        <div>
+            <span class="badge badge-lg fs-6" id="program-status">Статус</span>
+        </div>
+    </div>
+    
+    <!-- Інформація про програму -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Опис програми</h5>
+                </div>
+                <div class="card-body">
+                    <p id="program-description">Завантаження опису програми...</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Лікар, що призначив:</h6>
+                            <div class="d-flex align-items-center">
+                                <img src="https://via.placeholder.com/40" class="rounded-circle me-3" alt="Doctor">
+                                <div>
+                                    <strong id="doctor-name">Ім'я лікаря</strong>
+                                    <br>
+                                    <small class="text-muted" id="doctor-specialization">Спеціалізація</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Період виконання:</h6>
+                            <p class="mb-0">
+                                <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                <span id="program-period">Дати програми</span>
+                            </p>
+                            <p class="mb-0 mt-2">
+                                <i class="fas fa-clock me-2 text-muted"></i>
+                                Тривалість: <span id="program-duration">0 днів</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Прогрес виконання</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="position-relative d-inline-block">
+                        <canvas id="progress-chart" width="150" height="150"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle">
+                            <h2 id="progress-percentage" class="text-primary">0%</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <h4 id="completed-exercises" class="text-success">0</h4>
+                                <small>Виконано</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 id="total-exercises" class="text-muted">0</h4>
+                                <small>Всього</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Швидкі дії</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" id="start-session-btn">
+                            <i class="fas fa-play me-2"></i>Почати сесію
+                        </button>
+                        <button class="btn btn-info" id="view-progress-btn">
+                            <i class="fas fa-chart-line me-2"></i>Переглянути прогрес
+                        </button>
+                        <button class="btn btn-warning" id="contact-doctor-btn">
+                            <i class="fas fa-comment me-2"></i>Зв'язатися з лікарем
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Список вправ -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Вправи програми</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" id="filter-all">Всі</button>
+                <button class="btn btn-sm btn-outline-success" id="filter-completed">Виконані</button>
+                <button class="btn btn-sm btn-outline-warning" id="filter-pending">Очікують</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="exercises-container">
+                <p class="text-center">Завантаження вправ...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно сесії тренування -->
+<div class="modal fade" id="trainingSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Сесія тренування</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="current-exercise" class="text-center">
+                    <h4 id="current-exercise-title">Назва вправи</h4>
+                    <div class="ratio ratio-16x9 mb-3">
+                        <iframe id="current-exercise-video" src="" title="Exercise Video" allowfullscreen></iframe>
+                    </div>
+                    <p id="current-exercise-description">Опис вправи</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 id="exercise-duration">5 хв</h5>
+                                    <small>Тривалість</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 id="exercise-repetitions">10</h5>
+                                    <small>Повторень</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 id="exercise-intensity">Середня</h5>
+                                    <small>Інтенсивність</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Таймер -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>Таймер</h5>
+                            <div class="d-flex justify-content-center align-items-center">
+                                <h1 id="timer-display" class="text-primary me-3">05:00</h1>
+                                <div>
+                                    <button class="btn btn-success me-2" id="start-timer-btn">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="btn btn-warning me-2" id="pause-timer-btn">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                    <button class="btn btn-secondary" id="reset-timer-btn">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="prev-exercise-btn">
+                    <i class="fas fa-chevron-left me-2"></i>Попередня
+                </button>
+                <button type="button" class="btn btn-success" id="complete-exercise-btn">
+                    <i class="fas fa-check me-2"></i>Виконано
+                </button>
+                <button type="button" class="btn btn-primary" id="next-exercise-btn">
+                    Наступна<i class="fas fa-chevron-right ms-2"></i>
+                </button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Завершити сесію</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно прогресу -->
+<div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детальний прогрес</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="weekly-progress-chart" width="300" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Статистика за тиждень</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Виконано вправ:</span>
+                                <span id="weekly-completed">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Час тренувань:</span>
+                                <span id="weekly-time">0 хв</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Середня оцінка:</span>
+                                <span id="weekly-rating">0/5</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exercise-card {
+        transition: transform 0.2s;
+    }
+    
+    .exercise-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .completed-exercise {
+        opacity: 0.7;
+        background-color: #f8f9fa;
+    }
+    
+    .timer-controls button {
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .badge-lg {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        const programId = window.location.pathname.split('/')[2]; // Отримання ID з URL
+        let currentExerciseIndex = 0;
+        let exercises = [];
+        let timer = null;
+        let timerSeconds = 0;
+        
+        // Завантаження деталей програми
+        loadProgramDetails(programId);
+        
+        // Обробка кнопок фільтрації
+        $('#filter-all').click(() => filterExercises('all'));
+        $('#filter-completed').click(() => filterExercises('completed'));
+        $('#filter-pending').click(() => filterExercises('pending'));
+        
+        // Обробка швидких дій
+        $('#start-session-btn').click(() => startTrainingSession());
+        $('#view-progress-btn').click(() => showProgressModal());
+        $('#contact-doctor-btn').click(() => contactDoctor());
+        
+        // Обробка таймера
+        $('#start-timer-btn').click(() => startTimer());
+        $('#pause-timer-btn').click(() => pauseTimer());
+        $('#reset-timer-btn').click(() => resetTimer());
+        
+        // Обробка навігації між вправами
+        $('#prev-exercise-btn').click(() => navigateExercise(-1));
+        $('#next-exercise-btn').click(() => navigateExercise(1));
+        $('#complete-exercise-btn').click(() => completeCurrentExercise());
+    });
+    
+    // Завантаження деталей програми
+    function loadProgramDetails(programId) {
+        apiRequest(`/api/programs/${programId}/`)
+            .then(program => {
+                // Заповнення основної інформації
+                $('#program-title').text(program.title);
+                $('#program-description').text(program.description || 'Опис відсутній');
+                $('#program-status').text(getStatusText(program.status))
+                    .removeClass()
+                    .addClass(`badge badge-lg fs-6 bg-${getStatusClass(program.status)}`);
+                
+                // Інформація про лікаря
+                $('#doctor-name').text(program.doctor_name || 'Не призначено');
+                $('#doctor-specialization').text(program.doctor_specialization || 'Лікар');
+                
+                // Період виконання
+                const startDate = formatDate(program.start_date);
+                const endDate = formatDate(program.end_date);
+                $('#program-period').text(`${startDate} - ${endDate}`);
+                
+                // Тривалість програми
+                const duration = calculateDuration(program.start_date, program.end_date);
+                $('#program-duration').text(`${duration} днів`);
+                
+                // Завантаження вправ
+                loadProgramExercises(programId);
+                
+                // Завантаження прогресу
+                loadProgramProgress(programId);
+            })
+            .catch(error => {
+                console.error('Error loading program details:', error);
+                showErrorMessage('Помилка завантаження деталей програми');
+            });
+    }
+    
+    // Завантаження вправ програми
+    function loadProgramExercises(programId) {
+        apiRequest(`/api/programs/${programId}/exercises/`)
+            .then(data => {
+                exercises = data;
+                displayExercises(exercises);
+                updateExerciseStats(exercises);
+            })
+            .catch(error => {
+                console.error('Error loading exercises:', error);
+                $('#exercises-container').html('<p class="text-center text-danger">Помилка завантаження вправ</p>');
+            });
+    }
+    
+    // Відображення вправ
+    function displayExercises(exercisesList) {
+        if (exercisesList.length === 0) {
+            $('#exercises-container').html('<p class="text-center">Вправи не знайдено</p>');
+            return;
+        }
+        
+        let exercisesHtml = '<div class="row">';
+        
+        exercisesList.forEach((exercise, index) => {
+            const isCompleted = exercise.is_completed || false;
+            const completedClass = isCompleted ? 'completed-exercise' : '';
+            
+            exercisesHtml += `
+                <div class="col-md-6 col-lg-4 mb-3 exercise-item" data-status="${isCompleted ? 'completed' : 'pending'}">
+                    <div class="card exercise-card ${completedClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title">${exercise.title}</h6>
+                                ${isCompleted ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-clock text-warning"></i>'}
+                            </div>
+                            
+                            <p class="card-text small">${exercise.description ? exercise.description.substring(0, 80) + '...' : 'Опис відсутній'}</p>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted">Тривалість</small>
+                                    <div><strong>${exercise.duration || 5} хв</strong></div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Повторень</small>
+                                    <div><strong>${exercise.repetitions || 10}</strong></div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Рівень</small>
+                                    <div><strong>${getIntensityText(exercise.intensity)}</strong></div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm ${isCompleted ? 'btn-outline-success' : 'btn-primary'}" 
+                                        onclick="startSingleExercise(${index})">
+                                    ${isCompleted ? 'Переглянути' : 'Розпочати'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        exercisesHtml += '</div>';
+        $('#exercises-container').html(exercisesHtml);
+    }
+    
+    // Фільтрація вправ
+    function filterExercises(filter) {
+        // Оновлення активної кнопки
+        $('.btn[id^="filter-"]').removeClass('btn-primary').addClass('btn-outline-secondary');
+        $(`#filter-${filter}`).removeClass('btn-outline-secondary').addClass('btn-primary');
+        
+        // Фільтрація елементів
+        $('.exercise-item').each(function() {
+            const status = $(this).data('status');
+            
+            if (filter === 'all' || status === filter) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+    
+    // Оновлення статистики вправ
+    function updateExerciseStats(exercisesList) {
+        const completed = exercisesList.filter(ex => ex.is_completed).length;
+        const total = exercisesList.length;
+        
+        $('#completed-exercises').text(completed);
+        $('#total-exercises').text(total);
+        
+        // Створення кругової діаграми прогресу
+        createProgressChart(completed, total);
+    }
+    
+    // Створення кругової діаграми прогресу
+    function createProgressChart(completed, total) {
+        const ctx = document.getElementById('progress-chart').getContext('2d');
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+        
+        $('#progress-percentage').text(`${percentage}%`);
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [completed, total - completed],
+                    backgroundColor: ['#28a745', '#e9ecef'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // Початок сесії тренування
+    function startTrainingSession() {
+        const nextExercise = exercises.find(ex => !ex.is_completed);
+        
+        if (!nextExercise) {
+            showSuccessMessage('Всі вправи вже виконані!');
+            return;
+        }
+        
+        currentExerciseIndex = exercises.indexOf(nextExercise);
+        loadExerciseInSession(currentExerciseIndex);
+        $('#trainingSessionModal').modal('show');
+    }
+    
+    // Початок окремої вправи
+    function startSingleExercise(index) {
+        currentExerciseIndex = index;
+        loadExerciseInSession(index);
+        $('#trainingSessionModal').modal('show');
+    }
+    
+    // Завантаження вправи в сесію
+    function loadExerciseInSession(index) {
+        const exercise = exercises[index];
+        
+        $('#current-exercise-title').text(exercise.title);
+        $('#current-exercise-description').text(exercise.description || 'Опис відсутній');
+        $('#current-exercise-video').attr('src', exercise.video_url || 'https://www.youtube.com/embed/dQw4w9WgXcQ');
+        
+        $('#exercise-duration').text(`${exercise.duration || 5} хв`);
+        $('#exercise-repetitions').text(exercise.repetitions || 10);
+        $('#exercise-intensity').text(getIntensityText(exercise.intensity));
+        
+        // Налаштування таймера
+        timerSeconds = (exercise.duration || 5) * 60;
+        updateTimerDisplay();
+        
+        // Налаштування кнопок навігації
+        $('#prev-exercise-btn').prop('disabled', index === 0);
+        $('#next-exercise-btn').prop('disabled', index === exercises.length - 1);
+        
+        // Зміна тексту кнопки виконання
+        if (exercise.is_completed) {
+            $('#complete-exercise-btn').html('<i class="fas fa-undo me-2"></i>Скасувати виконання');
+        } else {
+            $('#complete-exercise-btn').html('<i class="fas fa-check me-2"></i>Виконано');
+        }
+    }
+    
+    // Навігація між вправами
+    function navigateExercise(direction) {
+        const newIndex = currentExerciseIndex + direction;
+        
+        if (newIndex >= 0 && newIndex < exercises.length) {
+            currentExerciseIndex = newIndex;
+            loadExerciseInSession(newIndex);
+        }
+    }
+    
+    // Позначення поточної вправи як виконаної
+    function completeCurrentExercise() {
+        const exercise = exercises[currentExerciseIndex];
+        const programId = window.location.pathname.split('/')[2];
+        
+        const action = exercise.is_completed ? 'uncomplete' : 'complete';
+        
+        apiRequest(`/api/programs/${programId}/exercises/${exercise.id}/${action}/`, 'POST')
+            .then(response => {
+                // Оновлення стану вправи
+                exercises[currentExerciseIndex].is_completed = !exercise.is_completed;
+                
+                // Оновлення інтерфейсу
+                loadExerciseInSession(currentExerciseIndex);
+                displayExercises(exercises);
+                updateExerciseStats(exercises);
+                
+                const message = exercise.is_completed ? 
+                    'Виконання вправи скасовано' : 
+                    'Вправа позначена як виконана';
+                showSuccessMessage(message);
+            })
+            .catch(error => {
+                console.error('Error updating exercise status:', error);
+                showErrorMessage('Помилка оновлення статусу вправи');
+            });
+    }
+    
+    // Управління таймером
+    function startTimer() {
+        if (timer) clearInterval(timer);
+        
+        timer = setInterval(() => {
+            if (timerSeconds > 0) {
+                timerSeconds--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(timer);
+                timer = null;
+                
+                // Автоматичне позначення як виконаної при закінченні часу
+                if (!exercises[currentExerciseIndex].is_completed) {
+                    completeCurrentExercise();
+                }
+                
+                showSuccessMessage('Час вправи закінчився!');
+            }
+        }, 1000);
+        
+        $('#start-timer-btn').prop('disabled', true);
+        $('#pause-timer-btn').prop('disabled', false);
+    }
+    
+    function pauseTimer() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+        
+        $('#start-timer-btn').prop('disabled', false);
+        $('#pause-timer-btn').prop('disabled', true);
+    }
+    
+    function resetTimer() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+        
+        const exercise = exercises[currentExerciseIndex];
+        timerSeconds = (exercise.duration || 5) * 60;
+        updateTimerDisplay();
+        
+        $('#start-timer-btn').prop('disabled', false);
+        $('#pause-timer-btn').prop('disabled', true);
+    }
+    
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timerSeconds / 60);
+        const seconds = timerSeconds % 60;
+        $('#timer-display').text(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }
+    
+    // Показ модального вікна прогресу
+    function showProgressModal() {
+        // Тут можна додати код для створення детальної діаграми прогресу
+        $('#progressModal').modal('show');
+        
+        // Приклад створення графіка тижневого прогресу
+        const ctx = document.getElementById('weekly-progress-chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+                datasets: [{
+                    label: 'Виконані вправи',
+                    data: [3, 5, 2, 8, 4, 6, 7],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // Зв'язок з лікарем
+    function contactDoctor() {
+        // Перенаправлення на сторінку чату або відкриття модального вікна
+        window.location.href = "{% url 'frontend:chat' %}";
+    }
+    
+    // Завантаження прогресу програми
+    function loadProgramProgress(programId) {
+        apiRequest(`/api/programs/${programId}/progress/`)
+            .then(progress => {
+                // Оновлення прогрес-бару та статистики
+                // Цей код залежить від структури API відповіді
+                console.log('Program progress:', progress);
+            })
+            .catch(error => {
+                console.error('Error loading program progress:', error);
+            });
+    }
+    
+    // Допоміжні функції
+    function getStatusClass(status) {
+        switch(status) {
+            case 'active': return 'success';
+            case 'completed': return 'primary';
+            case 'pending': return 'warning';
+            default: return 'secondary';
+        }
+    }
+    
+    function getStatusText(status) {
+        switch(status) {
+            case 'active': return 'Активна';
+            case 'completed': return 'Завершена';
+            case 'pending': return 'Очікує початку';
+            default: return 'Невідомо';
+        }
+    }
+    
+    function getIntensityText(intensity) {
+        switch(intensity) {
+            case 'low': return 'Низька';
+            case 'medium': return 'Середня';
+            case 'high': return 'Висока';
+            default: return 'Середня';
+        }
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('uk-UA');
+    }
+    
+    function calculateDuration(startDate, endDate) {
+        if (!startDate || !endDate) return 0;
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    function showSuccessMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-success alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+    
+    function showErrorMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-danger alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+</script>
+{% endblock %}

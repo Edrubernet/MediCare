@@ -1,0 +1,267 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Список користувачів{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Список користувачів</h1>
+            <p class="text-muted mb-0">Управління користувачами системи</p>
+        </div>
+        <div>
+            <a href="{% url 'staff:user_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Додати користувача
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="user_type" class="form-label">Тип користувача</label>
+                    <select class="form-select" name="user_type" id="user_type">
+                        <option value="">Всі типи</option>
+                        <option value="admin" {% if request.GET.user_type == 'admin' %}selected{% endif %}>Адміністратор</option>
+                        <option value="doctor" {% if request.GET.user_type == 'doctor' %}selected{% endif %}>Лікар</option>
+                        <option value="patient" {% if request.GET.user_type == 'patient' %}selected{% endif %}>Пацієнт</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="is_active" class="form-label">Статус</label>
+                    <select class="form-select" name="is_active" id="is_active">
+                        <option value="">Всі</option>
+                        <option value="True" {% if request.GET.is_active == 'True' %}selected{% endif %}>Активні</option>
+                        <option value="False" {% if request.GET.is_active == 'False' %}selected{% endif %}>Неактивні</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Пошук</label>
+                    <input type="text" class="form-control" name="search" id="search" 
+                           placeholder="Ім'я, email або username" value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="{% url 'staff:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-people text-primary me-2"></i>
+                Користувачі
+                {% if users %}
+                    <span class="badge bg-secondary ms-2">{{ users|length }}</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Користувач</th>
+                                <th>Тип</th>
+                                <th>Дата реєстрації</th>
+                                <th>Останній вхід</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if user.profile_image %}
+                                                <img src="{{ user.profile_image.url }}" class="rounded-circle me-3" 
+                                                     alt="{{ user.get_full_name }}" style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <span class="text-white fw-bold">
+                                                        {{ user.first_name|first }}{{ user.last_name|first }}
+                                                    </span>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ user.get_full_name }}</h6>
+                                                <small class="text-muted">{{ user.email }}</small>
+                                                <br><small class="text-muted">@{{ user.username }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if user.user_type == 'admin' %}danger{% elif user.user_type == 'doctor' %}primary{% else %}info{% endif %}">
+                                            {{ user.get_user_type_display }}
+                                        </span>
+                                        {% if user.is_superuser %}
+                                            <br><span class="badge bg-warning mt-1">Super</span>
+                                        {% endif %}
+                                        {% if user.is_staff %}
+                                            <br><span class="badge bg-secondary mt-1">Staff</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ user.date_joined|date:"d.m.Y" }}</span>
+                                        <br><small class="text-muted">{{ user.date_joined|date:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                            <span class="text-muted">{{ user.last_login|date:"d.m.Y" }}</span>
+                                            <br><small class="text-muted">{{ user.last_login|date:"H:i" }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Ніколи</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Активний</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Неактивний</span>
+                                        {% endif %}
+                                        {% if user.account_locked_until %}
+                                            <br><span class="badge bg-warning mt-1">Заблокований</span>
+                                        {% endif %}
+                                        {% if user.failed_login_attempts > 0 %}
+                                            <br><span class="badge bg-warning mt-1">{{ user.failed_login_attempts }} спроб</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'staff:user_detail' user.pk %}" 
+                                               class="btn btn-outline-primary" title="Переглянути">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'staff:user_edit' user.pk %}" 
+                                               class="btn btn-outline-secondary" title="Редагувати">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if user.user_type == 'doctor' and user.staff_profile %}
+                                                <a href="{% url 'staff:staff_profile_detail' user.staff_profile.pk %}" 
+                                                   class="btn btn-outline-info" title="Профіль співробітника">
+                                                    <i class="bi bi-briefcase"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Перша</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Попередня</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Наступна</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Остання</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Користувачі не знайдені</h5>
+                    <p class="text-muted">Спробуйте змінити фільтри або додайте нового користувача</p>
+                    <a href="{% url 'staff:user_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Додати користувача
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Всього користувачів</h6>
+                            <h3 class="mb-0">{{ users|length }}</h3>
+                        </div>
+                        <i class="bi bi-people fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Активні</h6>
+                            <h3 class="mb-0">{{ active_count|default:0 }}</h3>
+                        </div>
+                        <i class="bi bi-check-circle fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Лікарі</h6>
+                            <h3 class="mb-0">{{ doctor_count|default:0 }}</h3>
+                        </div>
+                        <i class="bi bi-person-badge fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Пацієнти</h6>
+                            <h3 class="mb-0">{{ patient_count|default:0 }}</h3>
+                        </div>
+                        <i class="bi bi-heart-pulse fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Панель звітів{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Панель звітів та аналітики</h4>
+                    <a href="{% url 'reports:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Створити звіт
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Quick Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>{{ total_reports }}</h4>
+                                            <p class="mb-0">Всього звітів</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-chart-bar fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>{{ active_patients }}</h4>
+                                            <p class="mb-0">Активні пацієнти</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>{{ completed_programs }}</h4>
+                                            <p class="mb-0">Завершені програми</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>{{ this_month_sessions }}</h4>
+                                            <p class="mb-0">Сесії цього місяця</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-calendar fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Report Types -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Типи звітів</h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-chart fa-3x text-primary mb-3"></i>
+                                    <h5>Прогрес пацієнтів</h5>
+                                    <p class="text-muted">Детальний аналіз прогресу реабілітації пацієнтів</p>
+                                    <a href="{% url 'reports:patient_progress' %}" class="btn btn-primary">
+                                        Створити звіт
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i>
+                                    <h5>Завершення програм</h5>
+                                    <p class="text-muted">Статистика виконання реабілітаційних програм</p>
+                                    <a href="{% url 'reports:program_completion' %}" class="btn btn-success">
+                                        Створити звіт
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-md fa-3x text-info mb-3"></i>
+                                    <h5>Активність лікарів</h5>
+                                    <p class="text-muted">Аналіз роботи та навантаження медичного персоналу</p>
+                                    <a href="{% url 'reports:doctor_activity' %}" class="btn btn-info">
+                                        Створити звіт
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Reports -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Останні звіти</h5>
+                            {% if recent_reports %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Назва</th>
+                                                <th>Тип</th>
+                                                <th>Створено</th>
+                                                <th>Автор</th>
+                                                <th>Дії</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for report in recent_reports %}
+                                                <tr>
+                                                    <td>{{ report.title }}</td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">
+                                                            {{ report.get_report_type_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+                                                    <td>{{ report.created_by.get_full_name }}</td>
+                                                    <td>
+                                                        <a href="{% url 'reports:detail' report.id %}" 
+                                                           class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-eye"></i> Переглянути
+                                                        </a>
+                                                        <button class="btn btn-sm btn-success" 
+                                                                onclick="exportReport({{ report.id }}, 'pdf')">
+                                                            <i class="fas fa-file-pdf"></i> PDF
+                                                        </button>
+                                                        <button class="btn btn-sm btn-info" 
+                                                                onclick="exportReport({{ report.id }}, 'excel')">
+                                                            <i class="fas fa-file-excel"></i> Excel
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Звіти ще не створювались</p>
+                                    <a href="{% url 'reports:create' %}" class="btn btn-primary">
+                                        Створити перший звіт
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportReport(reportId, format) {
+    window.location.href = `/reports/${reportId}/export/${format}/`;
+}
+</script>
+{% endblock %}

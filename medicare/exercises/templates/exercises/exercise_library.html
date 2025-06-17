@@ -1,0 +1,206 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Бібліотека вправ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Бібліотека вправ</h4>
+            <a href="{% url 'exercises:exercise_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Додати вправу
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">Всі категорії</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="difficultyFilter">
+                        <option value="">Всі рівні складності</option>
+                        {% for difficulty in difficulties %}
+                            <option value="{{ difficulty.id }}">{{ difficulty.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="bodyPartFilter">
+                        <option value="">Всі частини тіла</option>
+                        {% for body_part in body_parts %}
+                            <option value="{{ body_part.id }}">{{ body_part.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Пошук вправ...">
+                </div>
+            </div>
+            
+            <!-- Exercises Grid -->
+            {% if exercises %}
+                <div class="row" id="exercisesGrid">
+                    {% for exercise in exercises %}
+                        <div class="col-md-6 col-lg-4 mb-4 exercise-card" 
+                             data-category="{{ exercise.categories.all|join:',' }}"
+                             data-difficulty="{{ exercise.difficulty.id|default:'' }}"
+                             data-body-parts="{{ exercise.body_parts.all|join:',' }}">
+                            <div class="card h-100">
+                                {% if exercise.video_thumbnail %}
+                                    <img src="{{ exercise.video_thumbnail.url }}" class="card-img-top" 
+                                         alt="{{ exercise.title }}" style="height: 200px; object-fit: cover;">
+                                {% elif exercise.steps.all.0.image %}
+                                    <img src="{{ exercise.steps.all.0.image.url }}" class="card-img-top" 
+                                         alt="{{ exercise.title }}" style="height: 200px; object-fit: cover;">
+                                {% elif exercise.images.all.0.image %}
+                                    <img src="{{ exercise.images.all.0.image.url }}" class="card-img-top" 
+                                         alt="{{ exercise.title }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="fas fa-dumbbell fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{ exercise.title }}</h5>
+                                    <p class="card-text">{{ exercise.description|truncatechars:100 }}</p>
+                                    
+                                    <div class="mb-2">
+                                        {% if exercise.difficulty %}
+                                            <span class="badge bg-info">{{ exercise.difficulty.name }}</span>
+                                        {% endif %}
+                                        {% for category in exercise.categories.all %}
+                                            <span class="badge bg-secondary">{{ category.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="mt-auto">
+                                        <div class="d-grid gap-2">
+                                            <a href="{% url 'exercises:exercise_detail' exercise.id %}" 
+                                               class="btn btn-primary">
+                                                <i class="fas fa-eye"></i> Переглянути
+                                            </a>
+                                            {% if exercise.created_by == request.user or request.user.is_staff %}
+                                                <div class="btn-group w-100">
+                                                    <a href="{% url 'exercises:exercise_update' exercise.id %}" 
+                                                       class="btn btn-outline-warning btn-sm">
+                                                        <i class="fas fa-edit"></i> Редагувати
+                                                    </a>
+                                                    <a href="{% url 'exercises:exercise_delete' exercise.id %}" 
+                                                       class="btn btn-outline-danger btn-sm">
+                                                        <i class="fas fa-trash"></i> Видалити
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if exercises.has_other_pages %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if exercises.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ exercises.previous_page_number }}">
+                                        Попередня
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in exercises.paginator.page_range %}
+                                {% if exercises.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if exercises.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ exercises.next_page_number }}">
+                                        Наступна
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-dumbbell fa-5x text-muted mb-3"></i>
+                    <h5 class="text-muted">Вправи не знайдені</h5>
+                    <p class="text-muted">Додайте першу вправу до бібліотеки</p>
+                    <a href="{% url 'exercises:exercise_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Додати вправу
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const difficultyFilter = document.getElementById('difficultyFilter');
+    const bodyPartFilter = document.getElementById('bodyPartFilter');
+    const searchInput = document.getElementById('searchInput');
+    const exerciseCards = document.querySelectorAll('.exercise-card');
+
+    function filterExercises() {
+        const categoryValue = categoryFilter.value;
+        const difficultyValue = difficultyFilter.value;
+        const bodyPartValue = bodyPartFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+
+        exerciseCards.forEach(card => {
+            let visible = true;
+
+            // Category filter
+            if (categoryValue && !card.dataset.category.includes(categoryValue)) {
+                visible = false;
+            }
+
+            // Difficulty filter
+            if (difficultyValue && card.dataset.difficulty !== difficultyValue) {
+                visible = false;
+            }
+
+            // Body part filter
+            if (bodyPartValue && !card.dataset.bodyParts.includes(bodyPartValue)) {
+                visible = false;
+            }
+
+            // Search filter
+            if (searchValue && !card.textContent.toLowerCase().includes(searchValue)) {
+                visible = false;
+            }
+
+            card.style.display = visible ? 'block' : 'none';
+        });
+    }
+
+    categoryFilter.addEventListener('change', filterExercises);
+    difficultyFilter.addEventListener('change', filterExercises);
+    bodyPartFilter.addEventListener('change', filterExercises);
+    searchInput.addEventListener('input', filterExercises);
+});
+</script>
+{% endblock %}

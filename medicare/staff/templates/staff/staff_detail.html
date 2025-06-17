@@ -1,0 +1,190 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ staff_profile.user.get_full_name }} - Деталі{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">{{ staff_profile.user.get_full_name }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'staff:staff_profile_list' %}">Персонал</a></li>
+                    <li class="breadcrumb-item active">{{ staff_profile.user.get_full_name }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'staff:staff_profile_edit' staff_profile.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Редагувати
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Info -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="text-white fw-bold" style="font-size: 1.5rem;">
+                            {{ staff_profile.user.first_name|first }}{{ staff_profile.user.last_name|first }}
+                        </span>
+                    </div>
+                    <h5 class="mb-1">{{ staff_profile.user.get_full_name }}</h5>
+                    <p class="text-muted mb-3">{{ staff_profile.get_specialization_display|default:staff_profile.specialization }}</p>
+                    
+                    {% if staff_profile.user.is_active %}
+                        <span class="badge bg-success">Активний</span>
+                    {% else %}
+                        <span class="badge bg-danger">Неактивний</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Контактна інформація</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="bi bi-envelope text-muted me-2"></i>
+                        {{ staff_profile.user.email }}
+                    </p>
+                    {% if staff_profile.user.phone_number %}
+                        <p class="mb-0">
+                            <i class="bi bi-telephone text-muted me-2"></i>
+                            {{ staff_profile.user.phone_number }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Bio -->
+            {% if staff_profile.bio %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Біографія</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ staff_profile.bio|linebreaks }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Patients -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Пацієнти</h6>
+                    <span class="badge bg-secondary">{{ staff_profile.patients.count }}</span>
+                </div>
+                <div class="card-body">
+                    {% if staff_profile.patients.exists %}
+                        <div class="row">
+                            {% for patient in staff_profile.patients.all %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 32px; height: 32px;">
+                                                    <span class="text-white fw-bold small">
+                                                        {{ patient.user.first_name|first }}{{ patient.user.last_name|first }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ patient.user.get_full_name }}</h6>
+                                                    <small class="text-muted">{{ patient.user.email }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Немає призначених пацієнтів</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Certificates -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Сертифікати</h6>
+                    <span class="badge bg-secondary">{{ staff_profile.certificates.count }}</span>
+                </div>
+                <div class="card-body">
+                    {% if staff_profile.certificates.exists %}
+                        <div class="list-group list-group-flush">
+                            {% for certificate in staff_profile.certificates.all %}
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ certificate.name }}</h6>
+                                            <p class="mb-1 text-muted">{{ certificate.issuer }}</p>
+                                            <small class="text-muted">
+                                                Видано: {{ certificate.issue_date|date:"d.m.Y" }}
+                                                {% if certificate.expiry_date %}
+                                                    | Діє до: {{ certificate.expiry_date|date:"d.m.Y" }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        {% if certificate.file %}
+                                            <a href="{{ certificate.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Немає сертифікатів</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Work Schedule -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Розклад роботи</h6>
+                </div>
+                <div class="card-body">
+                    {% if staff_profile.work_schedules.exists %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>День тижня</th>
+                                        <th>Час початку</th>
+                                        <th>Час закінчення</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for schedule in staff_profile.work_schedules.all %}
+                                        <tr>
+                                            <td>{{ schedule.get_day_of_week_display }}</td>
+                                            <td>{{ schedule.start_time }}</td>
+                                            <td>{{ schedule.end_time }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Розклад не встановлено</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ patient.user.get_full_name }} - Деталі пацієнта{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Patient Information -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Інформація про пацієнта</h4>
+                    <div>
+                        <a href="{% url 'patients:patient_edit' patient.id %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Редагувати
+                        </a>
+                        <a href="{% url 'patients:patient_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Назад
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Особиста інформація</h5>
+                            <p><strong>Повне ім'я:</strong> {{ patient.user.get_full_name }}</p>
+                            <p><strong>Username:</strong> {{ patient.user.username }}</p>
+                            <p><strong>Email:</strong> {{ patient.user.email }}</p>
+                            <p><strong>Дата народження:</strong> {{ patient.date_of_birth|default:"Не вказано" }}</p>
+                            <p><strong>Стать:</strong> {{ patient.get_gender_display|default:"Не вказано" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Контактна інформація</h5>
+                            <p><strong>Адреса:</strong> {{ patient.address|default:"Не вказано" }}</p>
+                            <p><strong>Екстрений контакт:</strong> {{ patient.emergency_contact_name|default:"Не вказано" }}</p>
+                            <p><strong>Телефон:</strong> {{ patient.emergency_contact_phone|default:"Не вказано" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Medical History -->
+            {% if patient.medical_history %}
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Медична історія</h5>
+                        <a href="{% url 'patients:medical_history_edit' patient.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit"></i> Редагувати
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Хронічні захворювання:</strong></p>
+                                <p class="text-muted">{{ patient.medical_history.conditions|default:"Не вказано" }}</p>
+                                
+                                <p><strong>Алергії:</strong></p>
+                                <p class="text-muted">{{ patient.medical_history.allergies|default:"Не вказано" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Поточні медикаменти:</strong></p>
+                                <p class="text-muted">{{ patient.medical_history.medications|default:"Не вказано" }}</p>
+                                
+                                <p><strong>Попередні операції:</strong></p>
+                                <p class="text-muted">{{ patient.medical_history.surgeries|default:"Не вказано" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Rehabilitation History -->
+            {% if patient.rehabilitation_history.all %}
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Історія реабілітації</h5>
+                        <a href="{% url 'patients:add_rehabilitation_record' patient.id %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus"></i> Додати запис
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Дата травми</th>
+                                        <th>Тип травми</th>
+                                        <th>Діагноз</th>
+                                        <th>Лікар</th>
+                                        <th>Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in patient.rehabilitation_history.all %}
+                                        <tr>
+                                            <td>{{ record.injury_date }}</td>
+                                            <td>{{ record.injury_type }}</td>
+                                            <td>{{ record.diagnosis|truncatechars:50 }}</td>
+                                            <td>{{ record.doctor.user.get_full_name|default:"Не вказано" }}</td>
+                                            <td>
+                                                <a href="{% url 'patients:rehabilitation_record_detail' record.id %}" 
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Assigned Doctors -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Призначені лікарі</h5>
+                </div>
+                <div class="card-body">
+                    {% if patient.assigned_doctors.all %}
+                        {% for doctor in patient.assigned_doctors.all %}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">{{ doctor.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ doctor.specialization|default:"Спеціалізація не вказана" }}</small>
+                                </div>
+                            </div>
+                            {% if not forloop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">Лікарі не призначені</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Швидкі дії</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-calendar"></i> Призначити консультацію
+                        </a>
+                        <a href="#" class="btn btn-info">
+                            <i class="fas fa-chart-line"></i> Переглянути прогрес
+                        </a>
+                        <a href="#" class="btn btn-success">
+                            <i class="fas fa-dumbbell"></i> Програми реабілітації
+                        </a>
+                        <a href="#" class="btn btn-warning">
+                            <i class="fas fa-sticky-note"></i> Додати нотатку
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

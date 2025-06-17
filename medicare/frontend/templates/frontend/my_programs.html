@@ -1,0 +1,315 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Мої програми реабілітації - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Мої програми реабілітації</h1>
+    </div>
+    
+    <!-- Фільтр і пошук -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="search-input" class="form-control" placeholder="Пошук за назвою програми...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="status-filter" class="form-select">
+                        <option value="all">Всі програми</option>
+                        <option value="active">Активні</option>
+                        <option value="completed">Завершені</option>
+                        <option value="pending">Очікують початку</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="sort-by" class="form-select">
+                        <option value="date_desc">За датою (нові спочатку)</option>
+                        <option value="date_asc">За датою (старі спочатку)</option>
+                        <option value="progress">За прогресом</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Прогрес виконання -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Загальний прогрес реабілітації</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Виконання активних програм</h6>
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div id="total-progress" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 id="programs-total" class="text-primary">0</h3>
+                            <p>Всього програм</p>
+                        </div>
+                        <div class="col-4">
+                            <h3 id="programs-active" class="text-success">0</h3>
+                            <p>Активних</p>
+                        </div>
+                        <div class="col-4">
+                            <h3 id="programs-completed" class="text-info">0</h3>
+                            <p>Завершених</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Список програм -->
+    <div id="programs-container" class="row">
+        <p class="text-center">Завантаження програм реабілітації...</p>
+    </div>
+    
+    <!-- Пагінація -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination-container">
+            <!-- Pagination links will be inserted here -->
+        </ul>
+    </nav>
+</div>
+
+<!-- Модальне вікно з деталями вправи -->
+<div class="modal fade" id="exerciseDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exercise-details-title">Деталі вправи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="ratio ratio-16x9 mb-3">
+                            <iframe id="exercise-video" src="" title="Exercise Video" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Опис вправи</h5>
+                        <p id="exercise-description">Опис вправи</p>
+                        
+                        <h6>Інструкції:</h6>
+                        <div id="exercise-instructions">
+                            <ol>
+                                <li>Крок 1</li>
+                                <li>Крок 2</li>
+                                <li>Крок 3</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Параметри вправи:</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Тривалість:</span>
+                                        <span id="exercise-duration">5 хвилин</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Повторень:</span>
+                                        <span id="exercise-repetitions">10</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Інтенсивність:</span>
+                                        <span id="exercise-intensity">Середня</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Примітки лікаря:</h6>
+                                <p id="exercise-notes">Примітки лікаря</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="exercise-complete-btn">Позначити як виконану</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 1;
+    const programsContainer = document.getElementById('programs-container');
+    const paginationContainer = document.getElementById('pagination-container');
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const sortBy = document.getElementById('sort-by');
+
+    const fetchPrograms = async () => {
+        programsContainer.innerHTML = '<p class="text-center">Завантаження програм реабілітації...</p>';
+        
+        const searchQuery = searchInput.value;
+        const status = statusFilter.value;
+        const ordering = sortBy.value;
+
+        let url = `/api/programs/?page=${currentPage}`;
+        if (searchQuery) url += `&search=${searchQuery}`;
+        if (status !== 'all') url += `&status=${status}`;
+        
+        // Map frontend values to backend ordering fields
+        const orderingMap = {
+            'date_desc': '-start_date',
+            'date_asc': 'start_date',
+            'progress': '-progress' // Assuming a progress field exists
+        };
+        if (orderingMap[ordering]) {
+            url += `&ordering=${orderingMap[ordering]}`;
+        }
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            renderPrograms(data.results);
+            renderStatistics(data.results); // Simple stats based on current page
+            renderPagination(data.count, data.results.length);
+
+        } catch (error) {
+            console.error("Could not fetch programs:", error);
+            programsContainer.innerHTML = '<p class="text-center text-danger">Не вдалося завантажити програми.</p>';
+        }
+    };
+
+    const renderPrograms = (programs) => {
+        programsContainer.innerHTML = '';
+        if (!programs || programs.length === 0) {
+            programsContainer.innerHTML = '<p class="text-center">Не знайдено програм, що відповідають вашим критеріям.</p>';
+            return;
+        }
+
+        programs.forEach(program => {
+            const programCard = `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm program-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-truncate">${program.title}</h6>
+                            <span class="badge bg-${getStatusClass(program.status)}">${program.status}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">${program.description.substring(0, 100)}...</p>
+                            <div class="mb-2">
+                                <strong>Лікар:</strong> ${program.assigned_by_details.full_name || 'N/A'}
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${program.progress || 0}%;" aria-valuenow="${program.progress || 0}" aria-valuemin="0" aria-valuemax="100">${program.progress || 0}%</div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted d-flex justify-content-between">
+                            <small>Початок: ${new Date(program.start_date).toLocaleDateString()}</small>
+                            <a href="/program/${program.id}/" class="btn btn-sm btn-outline-primary">Детальніше</a>
+                        </div>
+                    </div>
+                </div>`;
+            programsContainer.insertAdjacentHTML('beforeend', programCard);
+        });
+    };
+    
+    const renderStatistics = (programs) => {
+        // This is a simplified version. A proper implementation might need a separate API endpoint for stats.
+        const total = programs.length;
+        const active = programs.filter(p => p.status === 'active').length;
+        const completed = programs.filter(p => p.status === 'completed').length;
+        
+        let totalProgress = 0;
+        if(active > 0){
+            totalProgress = programs.filter(p => p.status === 'active').reduce((acc, p) => acc + (p.progress || 0), 0) / active;
+        }
+
+        document.getElementById('programs-total').textContent = total;
+        document.getElementById('programs-active').textContent = active;
+        document.getElementById('programs-completed').textContent = completed;
+        
+        const totalProgressBar = document.getElementById('total-progress');
+        totalProgressBar.style.width = `${totalProgress.toFixed(0)}%`;
+        totalProgressBar.textContent = `${totalProgress.toFixed(0)}%`;
+        totalProgressBar.setAttribute('aria-valuenow', totalProgress.toFixed(0));
+    };
+
+    const renderPagination = (totalItems, itemsPerPage) => {
+        paginationContainer.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (totalPages <= 1) return;
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">Попередня</a>`;
+        paginationContainer.appendChild(prevLi);
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+            paginationContainer.appendChild(pageLi);
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Наступна</a>`;
+        paginationContainer.appendChild(nextLi);
+    };
+
+    const getStatusClass = (status) => {
+        switch (status) {
+            case 'active': return 'success';
+            case 'completed': return 'info';
+            case 'pending': return 'warning';
+            default: return 'secondary';
+        }
+    };
+
+    // Event Listeners
+    searchInput.addEventListener('keyup', () => { currentPage = 1; fetchPrograms(); });
+    statusFilter.addEventListener('change', () => { currentPage = 1; fetchPrograms(); });
+    sortBy.addEventListener('change', () => { currentPage = 1; fetchPrograms(); });
+
+    paginationContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = e.target.closest('a[data-page]');
+        if (target) {
+            const page = parseInt(target.dataset.page, 10);
+            if (page !== currentPage) {
+                currentPage = page;
+                fetchPrograms();
+            }
+        }
+    });
+
+    // Initial load
+    fetchPrograms();
+});
+</script>
+{% endblock %}

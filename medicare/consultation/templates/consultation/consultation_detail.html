@@ -1,0 +1,356 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Консультація - {{ consultation.patient.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Деталі консультації</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    {% if request.user.user_type == 'doctor' %}
+                        <li class="breadcrumb-item"><a href="{% url 'consultation:consultation_list' %}">Консультації</a></li>
+                    {% elif request.user.user_type == 'patient' %}
+                        <li class="breadcrumb-item"><a href="{% url 'consultation:patient_consultations' %}">Мої прийоми</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">Консультація #{{ consultation.id }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <span class="badge fs-6 
+                {% if consultation.status == 'scheduled' %}bg-warning
+                {% elif consultation.status == 'in_progress' %}bg-info
+                {% elif consultation.status == 'completed' %}bg-success
+                {% elif consultation.status == 'cancelled' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ consultation.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Consultation Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        Інформація про консультацію
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Пацієнт:</strong></p>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ consultation.patient.user.first_name|first }}{{ consultation.patient.user.last_name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ consultation.patient.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ consultation.patient.user.email }}</small>
+                                </div>
+                            </div>
+                            
+                            <p><strong>Лікар:</strong></p>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ consultation.doctor.user.first_name|first }}{{ consultation.doctor.user.last_name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Д-р {{ consultation.doctor.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ consultation.doctor.specialization|default:"Лікар" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p><strong>Дата та час:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                {{ consultation.start_time|date:"d.m.Y H:i" }} - {{ consultation.end_time|date:"H:i" }}
+                            </p>
+                            
+                            <p><strong>Тип консультації:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-{% if consultation.consultation_type == 'video' %}camera-video{% else %}person{% endif %} me-1"></i>
+                                {{ consultation.get_consultation_type_display }}
+                            </p>
+                            
+                            <p><strong>Тривалість:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ consultation.duration_minutes }} хвилин
+                            </p>
+                            
+                            {% if consultation.video_link %}
+                                <p><strong>Посилання для відео:</strong></p>
+                                <p>
+                                    <a href="{{ consultation.video_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-camera-video me-1"></i>
+                                        Приєднатися до відео
+                                    </a>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if consultation.notes %}
+                        <hr>
+                        <h6>Примітки:</h6>
+                        <p class="text-muted">{{ consultation.notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Consultation Notes -->
+            {% if consultation.consultation_note %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-journal-text text-info me-2"></i>
+                            Нотатки консультації
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ consultation.consultation_note.content|linebreaks }}</p>
+                        <small class="text-muted">
+                            Створено: {{ consultation.consultation_note.created_at|date:"d.m.Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Recording -->
+            {% if consultation.recording %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-play-circle text-warning me-2"></i>
+                            Запис консультації
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if consultation.recording.recording_file %}
+                            <audio controls class="w-100 mb-3">
+                                <source src="{{ consultation.recording.recording_file.url }}" type="audio/mpeg">
+                                Ваш браузер не підтримує відтворення аудіо.
+                            </audio>
+                        {% endif %}
+                        
+                        {% if consultation.recording.notes %}
+                            <p><strong>Примітки до запису:</strong></p>
+                            <p class="text-muted">{{ consultation.recording.notes }}</p>
+                        {% endif %}
+                        
+                        <small class="text-muted">
+                            Тривалість: {{ consultation.recording.duration_minutes }} хвилин
+                            | Створено: {{ consultation.recording.created_at|date:"d.m.Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Status Management -->
+            {% if request.user.user_type == 'doctor' %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear text-warning me-2"></i>
+                            Управління статусом
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            {% if consultation.status == 'scheduled' %}
+                                <button class="btn btn-info" onclick="updateStatus('in_progress')">
+                                    <i class="bi bi-play"></i> Почати консультацію
+                                </button>
+                                <button class="btn btn-warning" onclick="updateStatus('cancelled')">
+                                    <i class="bi bi-x-circle"></i> Скасувати
+                                </button>
+                            {% elif consultation.status == 'in_progress' %}
+                                <button class="btn btn-success" onclick="updateStatus('completed')">
+                                    <i class="bi bi-check-circle"></i> Завершити консультацію
+                                </button>
+                            {% elif consultation.status == 'completed' %}
+                                <div class="alert alert-success text-center">
+                                    <i class="bi bi-check-circle"></i>
+                                    Консультація завершена
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning text-warning me-2"></i>
+                        Швидкі дії
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if request.user.user_type == 'doctor' %}
+                            {% if not consultation.consultation_note %}
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notesModal">
+                                    <i class="bi bi-journal-plus"></i> Додати нотатки
+                                </button>
+                            {% else %}
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#notesModal">
+                                    <i class="bi bi-pencil"></i> Редагувати нотатки
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if consultation.video_link and consultation.status in 'scheduled,in_progress' %}
+                            <a href="{{ consultation.video_link }}" target="_blank" class="btn btn-success">
+                                <i class="bi bi-camera-video"></i> Приєднатися до відео
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% if request.user.user_type == 'doctor' %}{% url 'consultation:consultation_list' %}{% else %}{% url 'consultation:patient_consultations' %}{% endif %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Повернутися назад
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consultation Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle text-info me-2"></i>
+                        Додаткова інформація
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">ID консультації:</small>
+                        <p class="mb-1">#{{ consultation.id }}</p>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">Створено:</small>
+                        <p class="mb-1">{{ consultation.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    
+                    {% if consultation.updated_at != consultation.created_at %}
+                        <div class="mb-2">
+                            <small class="text-muted">Останнє оновлення:</small>
+                            <p class="mb-1">{{ consultation.updated_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notes Modal -->
+{% if request.user.user_type == 'doctor' %}
+<div class="modal fade" id="notesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {% if consultation.consultation_note %}Редагувати нотатки{% else %}Додати нотатки{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="notesForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notesContent" class="form-label">Нотатки консультації:</label>
+                        <textarea class="form-control" id="notesContent" name="content" rows="8" 
+                                  placeholder="Введіть нотатки про консультацію...">{% if consultation.consultation_note %}{{ consultation.consultation_note.content }}{% endif %}</textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" onclick="saveNotes()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+{% if request.user.user_type == 'doctor' %}
+function updateStatus(newStatus) {
+    const statusMessages = {
+        'in_progress': 'почати',
+        'completed': 'завершити',
+        'cancelled': 'скасувати'
+    };
+    
+    if (confirm(`Ви впевнені, що хочете ${statusMessages[newStatus]} цю консультацію?`)) {
+        fetch(`{% url 'consultation:update_consultation_status' consultation.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `status=${newStatus}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Помилка при зміні статусу');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Помилка при зміні статусу');
+        });
+    }
+}
+
+function saveNotes() {
+    const content = document.getElementById('notesContent').value;
+    
+    fetch(`/consultation/{{ consultation.id }}/notes/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Помилка при збереженні нотаток');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка при збереженні нотаток');
+    });
+}
+{% endif %}
+</script>
+{% endblock %}

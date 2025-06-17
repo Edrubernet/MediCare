@@ -1,0 +1,1196 @@
+```html
+
+{% extends 'frontend/base.html' %}
+
+{% block title %}Мої лікарі - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Заголовок сторінки -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="h2 mb-3">Мої лікарі</h1>
+            <p class="text-muted">Знайдіть та зв'яжіться з вашими лікарями-реабілітологами</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <button class="btn btn-primary" id="find-new-doctor-btn">
+                <i class="fas fa-user-plus me-2"></i>Знайти нового лікаря
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Фільтри -->
+        <div class="col-lg-3">
+            <div class="card sticky-top" style="top: 100px;">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i>Фільтри
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Пошук -->
+                    <div class="mb-3">
+                        <label for="doctor-search" class="form-label">Пошук</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="doctor-search" placeholder="Ім'я лікаря...">
+                        </div>
+                    </div>
+
+                    <!-- Спеціалізація -->
+                    <div class="mb-3">
+                        <label for="specialization-filter" class="form-label">Спеціалізація</label>
+                        <select class="form-select" id="specialization-filter">
+                            <option value="">Всі спеціалізації</option>
+                            <option value="physiotherapy">Фізіотерапія</option>
+                            <option value="occupational_therapy">Ерготерапія</option>
+                            <option value="speech_therapy">Логопедія</option>
+                            <option value="psychology">Психологія</option>
+                            <option value="massage">Масаж</option>
+                            <option value="cardio_rehabilitation">Кардіореабілітація</option>
+                            <option value="neuro_rehabilitation">Нейрореабілітація</option>
+                            <option value="orthopedic_rehabilitation">Ортопедична реабілітація</option>
+                        </select>
+                    </div>
+
+                    <!-- Рейтинг -->
+                    <div class="mb-3">
+                        <label class="form-label">Мінімальний рейтинг</label>
+                        <div class="rating-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="rating-filter" value="" id="rating-all" checked>
+                                <label class="form-check-label" for="rating-all">
+                                    Будь-який рейтинг
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="rating-filter" value="4" id="rating-4">
+                                <label class="form-check-label" for="rating-4">
+                                    <span class="rating-stars">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="far fa-star text-muted"></i>
+                                    </span>
+                                    і вище
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="rating-filter" value="4.5" id="rating-45">
+                                <label class="form-check-label" for="rating-45">
+                                    <span class="rating-stars">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star-half-alt text-warning"></i>
+                                    </span>
+                                    і вище
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Доступність -->
+                    <div class="mb-3">
+                        <label class="form-label">Доступність</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="available-today">
+                            <label class="form-check-label" for="available-today">
+                                Доступний сьогодні
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="available-this-week">
+                            <label class="form-check-label" for="available-this-week">
+                                Доступний цього тижня
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="online-consultation">
+                            <label class="form-check-label" for="online-consultation">
+                                Онлайн консультації
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Локація -->
+                    <div class="mb-3">
+                        <label for="location-filter" class="form-label">Локація</label>
+                        <select class="form-select" id="location-filter">
+                            <option value="">Всі локації</option>
+                            <option value="kyiv">Київ</option>
+                            <option value="lviv">Львів</option>
+                            <option value="odesa">Одеса</option>
+                            <option value="kharkiv">Харків</option>
+                            <option value="dnipro">Дніпро</option>
+                        </select>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" id="apply-filters-btn">
+                            <i class="fas fa-check me-2"></i>Застосувати
+                        </button>
+                        <button class="btn btn-outline-secondary" id="clear-filters-btn">
+                            <i class="fas fa-times me-2"></i>Очистити
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список лікарів -->
+        <div class="col-lg-9">
+            <!-- Результати пошуку -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="text-muted" id="results-count">Завантаження...</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <label for="sort-select" class="form-label me-2 mb-0">Сортувати:</label>
+                    <select class="form-select form-select-sm" id="sort-select" style="width: auto;">
+                        <option value="name">За ім'ям</option>
+                        <option value="rating">За рейтингом</option>
+                        <option value="experience">За досвідом</option>
+                        <option value="price">За ціною</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Список лікарів -->
+            <div id="doctors-list">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Завантаження...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Завантаження списку лікарів...</p>
+                </div>
+            </div>
+
+            <!-- Пагінація -->
+            <nav aria-label="Навігація по сторінках" id="pagination-container" style="display: none;">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- Пагінація буде згенерована динамічно -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно профілю лікаря -->
+<div class="modal fade" id="doctorProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Профіль лікаря</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" id="modal-doctor-avatar" alt="Doctor" width="150" height="150">
+                        <h5 id="modal-doctor-name">Ім'я лікаря</h5>
+                        <p class="text-muted" id="modal-doctor-specialization">Спеціалізація</p>
+                        <div class="rating mb-2" id="modal-doctor-rating">
+                            <!-- Рейтинг -->
+                        </div>
+                        <p class="small text-muted" id="modal-doctor-reviews-count">0 відгуків</p>
+                    </div>
+                    <div class="col-md-8">
+                        <h6>Про лікаря</h6>
+                        <p id="modal-doctor-bio">Інформація про лікаря...</p>
+                        
+                        <h6>Освіта та досвід</h6>
+                        <div id="modal-doctor-education">
+                            <!-- Освіта -->
+                        </div>
+                        
+                        <h6>Спеціалізації</h6>
+                        <div id="modal-doctor-specializations">
+                            <!-- Спеціалізації -->
+                        </div>
+                        
+                        <h6>Контактна інформація</h6>
+                        <div id="modal-doctor-contacts">
+                            <!-- Контакти -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" id="modal-send-message-btn">
+                    <i class="fas fa-comment me-2"></i>Надіслати повідомлення
+                </button>
+                <button type="button" class="btn btn-primary" id="modal-schedule-appointment-btn">
+                    <i class="fas fa-calendar-plus me-2"></i>Записатися на прийом
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно запису на прийом -->
+<div class="modal fade" id="scheduleAppointmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Записатися на прийом</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="schedule-appointment-form">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <img src="https://via.placeholder.com/60" class="rounded-circle" id="appointment-doctor-avatar" alt="Doctor" width="60" height="60">
+                        <h6 class="mt-2" id="appointment-doctor-name">Ім'я лікаря</h6>
+                        <small class="text-muted" id="appointment-doctor-specialization">Спеціалізація</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-type" class="form-label">Тип прийому</label>
+                        <select class="form-select" id="appointment-type" name="appointment_type" required>
+                            <option value="">Оберіть тип прийому</option>
+                            <option value="consultation">Консультація</option>
+                            <option value="therapy">Терапія</option>
+                            <option value="examination">Обстеження</option>
+                            <option value="follow_up">Повторний огляд</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-date" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="appointment-date" name="date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-time" class="form-label">Час</label>
+                        <select class="form-select" id="appointment-time" name="time" required>
+                            <option value="">Спочатку оберіть дату</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-format" class="form-label">Формат прийому</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" value="offline" id="format-offline" checked>
+                            <label class="form-check-label" for="format-offline">
+                                Очно в клініці
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" value="online" id="format-online">
+                            <label class="form-check-label" for="format-online">
+                                Онлайн консультація
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-notes" class="form-label">Примітки (необов'язково)</label>
+                        <textarea class="form-control" id="appointment-notes" name="notes" rows="3" placeholder="Опишіть ваші скарги або запитання..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Важливо:</strong> Прийом буде підтверджено лікарем. Ви отримаєте повідомлення про підтвердження.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-check me-2"></i>Записатися
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно пошуку нового лікаря -->
+<div class="modal fade" id="findDoctorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Знайти нового лікаря</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="new-doctor-search" class="form-label">Пошук за ім'ям</label>
+                            <input type="text" class="form-control" id="new-doctor-search" placeholder="Введіть ім'я лікаря...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="new-doctor-specialization" class="form-label">Спеціалізація</label>
+                            <select class="form-select" id="new-doctor-specialization">
+                                <option value="">Всі спеціалізації</option>
+                                <option value="physiotherapy">Фізіотерапія</option>
+                                <option value="occupational_therapy">Ерготерапія</option>
+                                <option value="speech_therapy">Логопедія</option>
+                                <option value="psychology">Психологія</option>
+                                <option value="massage">Масаж</option>
+                                <option value="cardio_rehabilitation">Кардіореабілітація</option>
+                                <option value="neuro_rehabilitation">Нейрореабілітація</option>
+                                <option value="orthopedic_rehabilitation">Ортопедична реабілітація</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary mb-3" id="search-new-doctors-btn">
+                    <i class="fas fa-search me-2"></i>Пошук
+                </button>
+                
+                <div id="new-doctors-results">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <p>Введіть параметри пошуку та натисніть "Пошук"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .doctor-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .doctor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .doctor-avatar {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+        font-size: 0.9rem;
+    }
+    
+    .rating-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .specialization-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .availability-badge {
+        font-size: 0.75rem;
+    }
+    
+    .doctor-info {
+        padding: 1.5rem;
+    }
+    
+    .doctor-actions {
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .price-tag {
+        font-weight: 600;
+        color: #28a745;
+    }
+    
+    .experience-badge {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+    }
+    
+    .online-indicator {
+        width: 12px;
+        height: 12px;
+        background-color: #28a745;
+        border: 2px solid white;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+    
+    .doctor-avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .filter-section {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .rating-filter .form-check {
+        margin-bottom: 0.5rem;
+    }
+    
+    .rating-filter .rating-stars {
+        font-size: 0.8rem;
+    }
+    
+    .sticky-top {
+        z-index: 1020;
+    }
+    
+    .modal-doctor-info {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .education-item {
+        border-left: 3px solid #007bff;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .specialization-tag {
+        display: inline-block;
+        background-color: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.75rem;
+        margin: 0.25rem 0.25rem 0.25rem 0;
+        border-radius: 15px;
+        font-size: 0.875rem;
+    }
+    
+    .contact-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .contact-item i {
+        width: 20px;
+        color: #6c757d;
+    }
+    
+    .appointment-time-slot {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        margin: 0.25rem;
+        padding: 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .appointment-time-slot:hover {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+    }
+    
+    .appointment-time-slot.selected {
+        background-color: #2196f3;
+        color: white;
+        border-color: #2196f3;
+    }
+    
+    .appointment-time-slot.unavailable {
+        background-color: #f5f5f5;
+        color: #9e9e9e;
+        cursor: not-allowed;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+    
+    @media (max-width: 768px) {
+        .doctor-card {
+            margin-bottom: 1rem;
+        }
+        
+        .doctor-avatar {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .doctor-info {
+            padding: 1rem;
+        }
+        
+        .doctor-actions {
+            padding: 0.75rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        let currentFilters = {};
+        let currentSort = 'name';
+        let selectedDoctorId = null;
+        
+        // Ініціалізація
+        loadDoctors();
+        setupEventHandlers();
+        
+        // Налаштування мінімальної дати для запису
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#appointment-date').attr('min', tomorrow.toISOString().split('T')[0]);
+    });
+    
+    // Налаштування обробників подій
+    function setupEventHandlers() {
+        // Пошук та фільтри
+        $('#doctor-search').on('input', debounce(applyFilters, 300));
+        $('#specialization-filter, #location-filter, #sort-select').change(applyFilters);
+        $('input[name="rating-filter"]').change(applyFilters);
+        $('#available-today, #available-this-week, #online-consultation').change(applyFilters);
+        
+        // Кнопки фільтрів
+        $('#apply-filters-btn').click(applyFilters);
+        $('#clear-filters-btn').click(clearFilters);
+        
+        // Модальні вікна
+        $('#find-new-doctor-btn').click(() => $('#findDoctorModal').modal('show'));
+        $('#search-new-doctors-btn').click(searchNewDoctors);
+        $('#new-doctor-search').on('input', debounce(searchNewDoctors, 300));
+        $('#new-doctor-specialization').change(searchNewDoctors);
+        
+        // Форма запису на прийом
+        $('#schedule-appointment-form').submit(handleAppointmentSubmit);
+        $('#appointment-date').change(loadAvailableTimeSlots);
+        
+        // Обробники модальних вікон
+        $('#modal-send-message-btn').click(() => sendMessageToDoctor(selectedDoctorId));
+        $('#modal-schedule-appointment-btn').click(() => openScheduleModal(selectedDoctorId));
+    }
+    
+    // Завантаження списку лікарів
+    function loadDoctors(page = 1) {
+        currentPage = page;
+        
+        // Показ індикатора завантаження
+        if (page === 1) {
+            $('#doctors-list').html(`
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Завантаження...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Завантаження списку лікарів...</p>
+                </div>
+            `);
+        }
+        
+        // Параметри запиту
+        const params = new URLSearchParams({
+            page: page,
+            ordering: currentSort,
+            ...currentFilters
+        });
+        
+        apiRequest(`/api/doctors/?${params}`)
+            .then(data => {
+                displayDoctors(data.results || data);
+                updateResultsCount(data.count || data.length);
+                updatePagination(data);
+            })
+            .catch(error => {
+                console.error('Error loading doctors:', error);
+                $('#doctors-list').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>Помилка завантаження</h5>
+                        <p>Не вдалося завантажити список лікарів</p>
+                        <button class="btn btn-primary" onclick="loadDoctors()">Спробувати знову</button>
+                    </div>
+                `);
+            });
+    }
+    
+    // Відображення списку лікарів
+    function displayDoctors(doctors) {
+        if (doctors.length === 0) {
+            $('#doctors-list').html(`
+                <div class="empty-state">
+                    <i class="fas fa-user-md"></i>
+                    <h5>Лікарі не знайдені</h5>
+                    <p>Спробуйте змінити параметри пошуку</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        doctors.forEach(doctor => {
+            html += generateDoctorCard(doctor);
+        });
+        
+        $('#doctors-list').html(`<div class="row">${html}</div>`);
+    }
+    
+    // Генерація картки лікаря
+    function generateDoctorCard(doctor) {
+        const rating = doctor.average_rating || 0;
+        const reviewsCount = doctor.reviews_count || 0;
+        const isOnline = doctor.is_online || false;
+        const isAvailable = doctor.is_available_today || false;
+        
+        return `
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card doctor-card h-100">
+                    <div class="doctor-info">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="doctor-avatar-container me-3">
+                                <img src="${doctor.avatar || 'https://via.placeholder.com/80'}" 
+                                     class="rounded-circle doctor-avatar" 
+                                     alt="${doctor.full_name}">
+                                ${isOnline ? '<div class="online-indicator"></div>' : ''}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${doctor.full_name}</h6>
+                                <span class="badge specialization-badge mb-2">
+                                    ${getSpecializationText(doctor.primary_specialization)}
+                                </span>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rating-stars me-2">
+                                        ${generateStars(rating)}
+                                    </div>
+                                    <span class="rating-text">${rating.toFixed(1)} (${reviewsCount})</span>
+                                </div>
+                                <div class="experience-badge">
+                                    ${doctor.years_of_experience || 0} років досвіду
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted small mb-3">
+                            ${doctor.bio ? doctor.bio.substring(0, 100) + '...' : 'Інформація про лікаря відсутня'}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex flex-wrap gap-1">
+                                ${isAvailable ? 
+                                    '<span class="badge bg-success availability-badge">Доступний сьогодні</span>' : 
+                                    '<span class="badge bg-secondary availability-badge">Зайнятий</span>'
+                                }
+                                ${doctor.online_consultations ? 
+                                    '<span class="badge bg-info availability-badge">Онлайн</span>' : ''
+                                }
+                            </div>
+                            <div class="price-tag">
+                                ${doctor.consultation_price ? `${doctor.consultation_price} грн` : 'Ціна за домовленістю'}
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center text-muted small">
+                            <div class="col-4">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                ${doctor.location || 'Не вказано'}
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-users me-1"></i>
+                                ${doctor.total_patients || 0} пацієнтів
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-calendar-check me-1"></i>
+                                ${doctor.completed_appointments || 0} прийомів
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="doctor-actions">
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewDoctorProfile(${doctor.id})">
+                                <i class="fas fa-user me-1"></i>Профіль
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="sendMessage(${doctor.id})">
+                                <i class="fas fa-comment me-1"></i>Написати
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="scheduleAppointment(${doctor.id})">
+                                <i class="fas fa-calendar-plus me-1"></i>Записатися
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Перегляд профілю лікаря
+    function viewDoctorProfile(doctorId) {
+        selectedDoctorId = doctorId;
+        
+        apiRequest(`/api/doctors/${doctorId}/`)
+            .then(doctor => {
+                displayDoctorProfile(doctor);
+                $('#doctorProfileModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading doctor profile:', error);
+                showErrorMessage('Помилка завантаження профілю лікаря');
+            });
+    }
+    
+    // Відображення профілю лікаря в модальному вікні
+    function displayDoctorProfile(doctor) {
+        $('#modal-doctor-avatar').attr('src', doctor.avatar || 'https://via.placeholder.com/150');
+        $('#modal-doctor-name').text(doctor.full_name);
+        $('#modal-doctor-specialization').text(getSpecializationText(doctor.primary_specialization));
+        
+        // Рейтинг
+        const rating = doctor.average_rating || 0;
+        $('#modal-doctor-rating').html(generateStars(rating) + ` <span class="ms-2">${rating.toFixed(1)}</span>`);
+        $('#modal-doctor-reviews-count').text(`${doctor.reviews_count || 0} відгуків`);
+        
+        // Біографія
+        $('#modal-doctor-bio').text(doctor.bio || 'Інформація про лікаря відсутня');
+        
+        // Освіта
+        let educationHtml = '';
+        if (doctor.education && doctor.education.length > 0) {
+            doctor.education.forEach(edu => {
+                educationHtml += `
+                    <div class="education-item">
+                        <h6 class="mb-1">${edu.institution}</h6>
+                        <p class="mb-1 text-muted">${edu.degree} - ${edu.field_of_study}</p>
+                        <small class="text-muted">${edu.graduation_year}</small>
+                    </div>
+                `;
+            });
+        } else {
+            educationHtml = '<p class="text-muted">Інформація про освіту відсутня</p>';
+        }
+        $('#modal-doctor-education').html(educationHtml);
+        
+        // Спеціалізації
+        let specializationsHtml = '';
+        if (doctor.specializations && doctor.specializations.length > 0) {
+            doctor.specializations.forEach(spec => {
+                specializationsHtml += `<span class="specialization-tag">${getSpecializationText(spec)}</span>`;
+            });
+        } else {
+            specializationsHtml = '<p class="text-muted">Спеціалізації не вказані</p>';
+        }
+        $('#modal-doctor-specializations').html(specializationsHtml);
+        
+        // Контакти
+        let contactsHtml = '';
+        if (doctor.phone) {
+            contactsHtml += `
+                <div class="contact-item">
+                    <i class="fas fa-phone me-2"></i>
+                    <span>${doctor.phone}</span>
+                </div>
+            `;
+        }
+        if (doctor.email) {
+            contactsHtml += `
+                <div class="contact-item">
+                    <i class="fas fa-envelope me-2"></i>
+                    <span>${doctor.email}</span>
+                </div>
+            `;
+        }
+        if (doctor.location) {
+            contactsHtml += `
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <span>${doctor.location}</span>
+                </div>
+            `;
+        }
+        if (!contactsHtml) {
+            contactsHtml = '<p class="text-muted">Контактна інформація недоступна</p>';
+        }
+        $('#modal-doctor-contacts').html(contactsHtml);
+    }
+    
+    // Запис на прийом
+    function scheduleAppointment(doctorId) {
+        selectedDoctorId = doctorId;
+        
+        apiRequest(`/api/doctors/${doctorId}/`)
+            .then(doctor => {
+                $('#appointment-doctor-avatar').attr('src', doctor.avatar || 'https://via.placeholder.com/60');
+                $('#appointment-doctor-name').text(doctor.full_name);
+                $('#appointment-doctor-specialization').text(getSpecializationText(doctor.primary_specialization));
+                
+                $('#scheduleAppointmentModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading doctor data:', error);
+                showErrorMessage('Помилка завантаження даних лікаря');
+            });
+    }
+    
+    // Відкриття модального вікна запису з модального вікна профілю
+    function openScheduleModal(doctorId) {
+        $('#doctorProfileModal').modal('hide');
+        scheduleAppointment(doctorId);
+    }
+    
+    // Завантаження доступних часових слотів
+    function loadAvailableTimeSlots() {
+        const date = $('#appointment-date').val();
+        if (!date || !selectedDoctorId) return;
+        
+        $('#appointment-time').html('<option value="">Завантаження...</option>');
+        
+        apiRequest(`/api/doctors/${selectedDoctorId}/available-slots/?date=${date}`)
+            .then(slots => {
+                let html = '<option value="">Оберіть час</option>';
+                
+                if (slots.length === 0) {
+                    html += '<option value="" disabled>Немає доступних слотів</option>';
+                } else {
+                    slots.forEach(slot => {
+                        html += `<option value="${slot.time}">${slot.time} - ${slot.end_time}</option>`;
+                    });
+                }
+                
+                $('#appointment-time').html(html);
+            })
+            .catch(error => {
+                console.error('Error loading time slots:', error);
+                $('#appointment-time').html('<option value="" disabled>Помилка завантаження</option>');
+            });
+    }
+    
+    // Обробка форми запису на прийом
+    function handleAppointmentSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const appointmentData = {
+            doctor: selectedDoctorId,
+            date: formData.get('date'),
+            time: formData.get('time'),
+            appointment_type: formData.get('appointment_type'),
+            format: formData.get('format'),
+            notes: formData.get('notes')
+        };
+        
+        apiRequest('/api/appointments/', 'POST', appointmentData)
+            .then(response => {
+                $('#scheduleAppointmentModal').modal('hide');
+                $('#schedule-appointment-form')[0].reset();
+                showSuccessMessage('Заявка на прийом успішно подана! Очікуйте підтвердження від лікаря.');
+            })
+            .catch(error => {
+                console.error('Error scheduling appointment:', error);
+                showErrorMessage('Помилка при записі на прийом. Спробуйте ще раз.');
+            });
+    }
+    
+    // Надсилання повідомлення лікарю
+    function sendMessage(doctorId) {
+        window.location.href = `/chat/?doctor=${doctorId}`;
+    }
+    
+    function sendMessageToDoctor(doctorId) {
+        $('#doctorProfileModal').modal('hide');
+        sendMessage(doctorId);
+    }
+    
+    // Застосування фільтрів
+    function applyFilters() {
+        currentFilters = {
+            search: $('#doctor-search').val(),
+            specialization: $('#specialization-filter').val(),
+            location: $('#location-filter').val(),
+            min_rating: $('input[name="rating-filter"]:checked').val(),
+            available_today: $('#available-today').is(':checked'),
+            available_this_week: $('#available-this-week').is(':checked'),
+            online_consultation: $('#online-consultation').is(':checked')
+        };
+        
+        // Видалення пустих фільтрів
+        Object.keys(currentFilters).forEach(key => {
+            if (!currentFilters[key] && currentFilters[key] !== false) {
+                delete currentFilters[key];
+            }
+        });
+        
+        currentSort = $('#sort-select').val();
+        loadDoctors(1);
+    }
+    
+    // Очищення фільтрів
+    function clearFilters() {
+        $('#doctor-search').val('');
+        $('#specialization-filter').val('');
+        $('#location-filter').val('');
+        $('input[name="rating-filter"]').prop('checked', false);
+        $('#rating-all').prop('checked', true);
+        $('#available-today, #available-this-week, #online-consultation').prop('checked', false);
+        $('#sort-select').val('name');
+        
+        currentFilters = {};
+        currentSort = 'name';
+        loadDoctors(1);
+    }
+    
+    // Пошук нових лікарів
+    function searchNewDoctors() {
+        const search = $('#new-doctor-search').val();
+        const specialization = $('#new-doctor-specialization').val();
+        
+        if (!search && !specialization) {
+            $('#new-doctors-results').html(`
+                <div class="text-center text-muted">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <p>Введіть параметри пошуку та натисніть "Пошук"</p>
+                </div>
+            `);
+            return;
+        }
+        
+        $('#new-doctors-results').html(`
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Пошук...</span>
+                </div>
+            </div>
+        `);
+        
+        const params = new URLSearchParams({
+            search: search,
+            specialization: specialization,
+            exclude_my_doctors: true
+        });
+        
+        apiRequest(`/api/doctors/search/?${params}`)
+            .then(doctors => {
+                displayNewDoctorsResults(doctors);
+            })
+            .catch(error => {
+                console.error('Error searching doctors:', error);
+                $('#new-doctors-results').html(`
+                    <div class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Помилка пошуку лікарів</p>
+                    </div>
+                `);
+            });
+    }
+    
+    // Відображення результатів пошуку нових лікарів
+    function displayNewDoctorsResults(doctors) {
+        if (doctors.length === 0) {
+            $('#new-doctors-results').html(`
+                <div class="text-center text-muted">
+                    <i class="fas fa-user-slash fa-2x mb-3"></i>
+                    <p>Лікарі за вашими критеріями не знайдені</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        doctors.forEach(doctor => {
+            html += `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <img src="${doctor.avatar || 'https://via.placeholder.com/50'}" 
+                                 class="rounded-circle me-3" width="50" height="50" alt="${doctor.full_name}">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${doctor.full_name}</h6>
+                                <p class="mb-1 text-muted">${getSpecializationText(doctor.primary_specialization)}</p>
+                                <div class="rating-stars">
+                                    ${generateStars(doctor.average_rating || 0)}
+                                    <span class="ms-2 text-muted">${(doctor.average_rating || 0).toFixed(1)}</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="addToMyDoctors(${doctor.id})">
+                                <i class="fas fa-plus me-1"></i>Додати
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#new-doctors-results').html(html);
+    }
+    
+    // Додавання лікаря до "Моїх лікарів"
+    function addToMyDoctors(doctorId) {
+        apiRequest('/api/my-doctors/', 'POST', { doctor: doctorId })
+            .then(response => {
+                showSuccessMessage('Лікаря додано до ваших лікарів');
+                $('#findDoctorModal').modal('hide');
+                loadDoctors(); // Перезавантаження списку
+            })
+            .catch(error => {
+                console.error('Error adding doctor:', error);
+                showErrorMessage('Помилка додавання лікаря');
+            });
+    }
+    
+    // Оновлення кількості результатів
+    function updateResultsCount(count) {
+        $('#results-count').text(`Знайдено ${count} лікарів`);
+    }
+    
+    // Оновлення пагінації
+    function updatePagination(data) {
+        if (!data.next && !data.previous && data.count <= 10) {
+            $('#pagination-container').hide();
+            return;
+        }
+        
+        const totalPages = Math.ceil(data.count / 10);
+        let html = '';
+        
+        // Попередня сторінка
+        if (data.previous) {
+            html += `<li class="page-item">
+                        <a class="page-link" href="#" onclick="loadDoctors(${currentPage - 1})">Попередня</a>
+                     </li>`;
+        }
+        
+        // Номери сторінок
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<li class="page-item active">
+                            <span class="page-link">${i}</span>
+                         </li>`;
+            } else {
+                html += `<li class="page-item">
+                            <a class="page-link" href="#" onclick="loadDoctors(${i})">${i}</a>
+                         </li>`;
+            }
+        }
+        
+        // Наступна сторінка
+        if (data.next) {
+            html += `<li class="page-item">
+                        <a class="page-link" href="#" onclick="loadDoctors(${currentPage + 1})">Наступна</a>
+                     </li>`;
+        }
+        
+        $('#pagination').html(html);
+        $('#pagination-container').show();
+    }
+    
+    // Допоміжні функції
+    function generateStars(rating) {
+        let stars = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+        
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+        
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+        
+        return stars;
+    }
+    
+    function getSpecializationText(specialization) {
+        const specializations = {
+            'physiotherapy': 'Фізіотерапія',
+            'occupational_therapy': 'Ерготерапія',
+            'speech_therapy': 'Логопедія',
+            'psychology': 'Психологія',
+            'massage': 'Масаж',
+            'cardio_rehabilitation': 'Кардіореабілітація',
+            'neuro_rehabilitation': 'Нейрореабілітація',
+            'orthopedic_rehabilitation': 'Ортопедична реабілітація'
+        };
+        
+        return specializations[specialization] || 'Інше';
+    }
+    
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    function showSuccessMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-success border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        
+        $('body').append(toast);
+        toast.toast('show');
+        
+        setTimeout(() => toast.remove(), 5000);
+    }
+    
+    function showErrorMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-danger border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        
+        $('body').append(toast);
+        toast.toast('show');
+        
+        setTimeout(() => toast.remove(), 5000);
+    }
+</script>
+{% endblock %}

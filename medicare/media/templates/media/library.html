@@ -1,0 +1,271 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Медіа бібліотека{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Медіа бібліотека</h4>
+            <div>
+                <a href="{% url 'media:upload' %}" class="btn btn-success">
+                    <i class="fas fa-upload"></i> Завантажити файл
+                </a>
+                <a href="{% url 'media:upload_multiple' %}" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Множинне завантаження
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="fileTypeFilter">
+                        <option value="">Всі типи файлів</option>
+                        <option value="video">Відео</option>
+                        <option value="image">Зображення</option>
+                        <option value="document">Документи</option>
+                        <option value="audio">Аудіо</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Пошук файлів...">
+                </div>
+                <div class="col-md-3">
+                    <div class="btn-group w-100">
+                        <button class="btn btn-outline-secondary" id="gridView" title="Сітка">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary active" id="listView" title="Список">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Storage Usage -->
+            <div class="alert alert-info mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-hdd"></i> Використано сховища: {{ used_storage_mb }}MB з {{ total_storage_mb }}MB</span>
+                    <div class="progress" style="width: 200px;">
+                        <div class="progress-bar" style="width: {{ storage_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Media Files -->
+            {% if media_files %}
+                <!-- Grid View -->
+                <div id="gridViewContainer" class="d-none">
+                    <div class="row">
+                        {% for file in media_files %}
+                            <div class="col-md-3 col-lg-2 mb-3 media-item" data-type="{{ file.file_type }}">
+                                <div class="card h-100">
+                                    {% if file.file_type == 'image' %}
+                                        <img src="{{ file.file.url }}" class="card-img-top" 
+                                             style="height: 120px; object-fit: cover;" alt="{{ file.title }}">
+                                    {% elif file.file_type == 'video' %}
+                                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" 
+                                             style="height: 120px;">
+                                            <i class="fas fa-play-circle fa-3x text-white"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                             style="height: 120px;">
+                                            <i class="fas fa-file fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1" title="{{ file.title }}">
+                                            {{ file.title|truncatechars:20 }}
+                                        </h6>
+                                        <small class="text-muted">{{ file.get_file_type_display }}</small>
+                                        <div class="mt-2">
+                                            <a href="{% url 'media:detail' file.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ file.file.url }}" class="btn btn-sm btn-success" download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- List View -->
+                <div id="listViewContainer">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Назва</th>
+                                    <th>Тип</th>
+                                    <th>Розмір</th>
+                                    <th>Завантажено</th>
+                                    <th>Автор</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in media_files %}
+                                    <tr class="media-item" data-type="{{ file.file_type }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if file.file_type == 'image' %}
+                                                    <img src="{{ file.file.url }}" width="40" height="40" 
+                                                         class="rounded me-2" style="object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 40px; height: 40px;">
+                                                        {% if file.file_type == 'video' %}
+                                                            <i class="fas fa-video text-primary"></i>
+                                                        {% elif file.file_type == 'audio' %}
+                                                            <i class="fas fa-music text-success"></i>
+                                                        {% else %}
+                                                            <i class="fas fa-file text-muted"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ file.title }}</h6>
+                                                    {% if file.description %}
+                                                        <small class="text-muted">{{ file.description|truncatechars:50 }}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ file.get_file_type_display }}</span>
+                                        </td>
+                                        <td>{{ file.file_size|filesizeformat }}</td>
+                                        <td>{{ file.created_at|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ file.uploaded_by.get_full_name }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{% url 'media:detail' file.id %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'media:edit' file.id %}" 
+                                                   class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ file.file.url }}" 
+                                                   class="btn btn-sm btn-outline-success" download>
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                <a href="{% url 'media:delete' file.id %}" 
+                                                   class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                {% if media_files.has_other_pages %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if media_files.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ media_files.previous_page_number }}">
+                                        Попередня
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in media_files.paginator.page_range %}
+                                {% if media_files.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if media_files.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ media_files.next_page_number }}">
+                                        Наступна
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-5x text-muted mb-3"></i>
+                    <h5 class="text-muted">Медіа файли не знайдені</h5>
+                    <p class="text-muted">Завантажте перший файл до бібліотеки</p>
+                    <a href="{% url 'media:upload' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Завантажити файл
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileTypeFilter = document.getElementById('fileTypeFilter');
+    const searchInput = document.getElementById('searchInput');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const gridViewContainer = document.getElementById('gridViewContainer');
+    const listViewContainer = document.getElementById('listViewContainer');
+    const mediaItems = document.querySelectorAll('.media-item');
+
+    // View switcher
+    gridView.addEventListener('click', function() {
+        gridView.classList.add('active');
+        listView.classList.remove('active');
+        gridViewContainer.classList.remove('d-none');
+        listViewContainer.classList.add('d-none');
+    });
+
+    listView.addEventListener('click', function() {
+        listView.classList.add('active');
+        gridView.classList.remove('active');
+        listViewContainer.classList.remove('d-none');
+        gridViewContainer.classList.add('d-none');
+    });
+
+    // Filters
+    function filterMedia() {
+        const typeValue = fileTypeFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+
+        mediaItems.forEach(item => {
+            let visible = true;
+
+            if (typeValue && item.dataset.type !== typeValue) {
+                visible = false;
+            }
+
+            if (searchValue && !item.textContent.toLowerCase().includes(searchValue)) {
+                visible = false;
+            }
+
+            item.style.display = visible ? '' : 'none';
+        });
+    }
+
+    fileTypeFilter.addEventListener('change', filterMedia);
+    searchInput.addEventListener('input', filterMedia);
+});
+</script>
+{% endblock %}

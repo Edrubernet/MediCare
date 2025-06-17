@@ -1,0 +1,52 @@
+# Django основні пакети
+Django==5.2.1
+djangorestframework==3.15.2
+psycopg2==2.9.10
+
+# Форми та UI
+django-bootstrap5==24.3
+django-crispy-forms==2.3
+crispy-bootstrap5==2024.2
+
+# WebSockets для чату
+channels==4.2.2
+channels-redis==4.2.0
+
+# Файли та медіа
+Pillow==11.2.1
+whitenoise==6.7.0
+
+# Утиліти
+python-dotenv==1.0.1
+pytz==2025.2
+
+# Безпека
+django-ratelimit==4.1.0
+
+# Розробка та тестування
+coverage==7.6.1
+factory-boy==3.3.1
+
+# Дата та час
+python-dateutil==2.9.0.post0
+
+# Експорт даних
+openpyxl==3.1.5
+reportlab==4.2.2
+
+# Очищення даних
+bleach==6.1.0
+
+# HTTP запити
+requests==2.32.3
+
+# Google APIs
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.153.0
+
+# Інші залежності
+setuptools==80.4.0
+wheel==0.45.1
+tzdata==2025.2

@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Календар Google{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Інтеграція з Google Calendar</h4>
+                    <div>
+                        <a href="{% url 'google_calendar:settings' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> Налаштування
+                        </a>
+                        <a href="{% url 'google_calendar:create_event' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Створити подію
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if user.google_calendar_credentials %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            Google Calendar успішно підключено
+                        </div>
+                        
+                        <!-- Calendar View -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div id="calendar"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Upcoming Events -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Найближчі події</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if upcoming_events %}
+                                            {% for event in upcoming_events %}
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="me-3">
+                                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-calendar text-white"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-0">{{ event.event_summary }}</h6>
+                                                        <small class="text-muted">
+                                                            {{ event.start_time|date:"d.m.Y H:i" }}
+                                                        </small>
+                                                    </div>
+                                                    <div>
+                                                        <a href="{% url 'google_calendar:event_detail' event.id %}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">Немає найближчих подій</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Sync Status -->
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Статус синхронізації</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Остання синхронізація:</strong></p>
+                                        <p class="text-muted">{{ last_sync|date:"d.m.Y H:i"|default:"Ніколи" }}</p>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="syncCalendar()">
+                                            <i class="fas fa-sync"></i> Синхронізувати
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fab fa-google fa-5x text-muted mb-3"></i>
+                            <h5>Google Calendar не підключено</h5>
+                            <p class="text-muted">Підключіть свій Google Calendar для синхронізації подій</p>
+                            <a href="{% url 'google_calendar:connect' %}" class="btn btn-primary">
+                                <i class="fab fa-google"></i> Підключити Google Calendar
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user.google_calendar_credentials %}
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: '{% url "google_calendar:events_json" %}',
+            eventClick: function(info) {
+                window.location.href = '/google-calendar/events/' + info.event.id + '/';
+            }
+        });
+        calendar.render();
+    {% endif %}
+});
+
+function syncCalendar() {
+    fetch('{% url "google_calendar:sync" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Помилка при синхронізації календаря');
+        }
+    });
+}
+</script>
+{% endblock %}

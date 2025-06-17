@@ -1,0 +1,623 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Повідомлення - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row h-100">
+        <!-- Список чатів -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Повідомлення</h5>
+                    <button class="btn btn-sm btn-primary" id="new-chat-btn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Пошук -->
+                    <div class="p-3 border-bottom">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="chat-search" placeholder="Пошук повідомлень...">
+                        </div>
+                    </div>
+                    
+                    <!-- Список чатів -->
+                    <div class="chat-list" id="chat-list">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Завантаження...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Область чату -->
+        <div class="col-md-8 col-lg-9">
+            <div class="card h-100 d-flex flex-column">
+                <!-- Заголовок чату -->
+                <div class="card-header d-flex justify-content-between align-items-center" id="chat-header" style="display: none !important;">
+                    <div class="d-flex align-items-center">
+                        <img src="/static/frontend/img/default-avatar.svg" class="rounded-circle me-3" alt="User" id="chat-user-avatar">
+                        <div>
+                            <h6 class="mb-0" id="chat-user-name">Ім'я користувача</h6>
+                            <small class="text-muted" id="chat-user-status">Статус</small>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="view-profile-btn"><i class="fas fa-user me-2"></i>Переглянути профіль</a></li>
+                            <li><a class="dropdown-item" href="#" id="clear-chat-btn"><i class="fas fa-trash me-2"></i>Очистити чат</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="block-user-btn"><i class="fas fa-ban me-2"></i>Заблокувати</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Повідомлення -->
+                <div class="card-body flex-grow-1 p-0 d-flex flex-column">
+                    <div class="flex-grow-1 p-3" id="messages-container" style="height: 400px; overflow-y: auto;">
+                        <div class="text-center text-muted" id="no-chat-selected">
+                            <i class="fas fa-comments fa-3x mb-3"></i>
+                            <h5>Оберіть чат для початку розмови</h5>
+                            <p>Виберіть існуючий чат або створіть новий</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Панель вводу повідомлення -->
+                    <div class="border-top p-3" id="message-input-panel" style="display: none;">
+                        <form id="message-form">
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button" id="attach-file-btn">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="text" class="form-control" id="message-input" placeholder="Введіть повідомлення..." autocomplete="off">
+                                <button class="btn btn-primary" type="submit" id="send-message-btn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <input type="file" id="file-input" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx">
+                        </form>
+                        
+                        <!-- Індикатор друку -->
+                        <div id="typing-indicator" class="text-muted small mt-2" style="display: none;">
+                            <i class="fas fa-ellipsis-h"></i> <span id="typing-user">Користувач</span> друкує...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно нового чату -->
+<div class="modal fade" id="newChatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Новий чат</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="user-search" class="form-label">Знайти користувача</label>
+                    <input type="text" class="form-control" id="user-search" placeholder="Введіть ім'я або email...">
+                </div>
+                
+                <div id="users-list" class="list-group">
+                    <!-- Список користувачів -->
+                </div>
+                
+                <div class="text-center mt-3" id="users-loading" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Пошук...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно перегляду файлу -->
+<div class="modal fade" id="fileViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="file-modal-title">Перегляд файлу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="file-modal-content">
+                    <!-- Контент файлу -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary" id="download-file-btn" download>
+                    <i class="fas fa-download me-2"></i>Завантажити
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .chat-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .chat-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .chat-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #007bff;
+    }
+    
+    .chat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        max-width: 70%;
+    }
+    
+    .message.own {
+        margin-left: auto;
+        text-align: right;
+    }
+    
+    .message.other {
+        margin-right: auto;
+        text-align: left;
+    }
+    
+    .message-bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        display: inline-block;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+    
+    .message.own .message-bubble {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .message.other .message-bubble {
+        background-color: #f1f1f1;
+        color: #333;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .unread-count {
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.75rem;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    .online-indicator {
+        width: 12px;
+        height: 12px;
+        background-color: #28a745;
+        border: 2px solid white;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+    
+    .user-avatar {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .file-attachment {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 5px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    
+    .file-attachment:hover {
+        border-color: #007bff;
+    }
+    
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 10px;
+    }
+    
+    .file-icon.pdf {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .file-icon.doc {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .file-icon.image {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    #messages-container {
+        scrollbar-width: thin;
+        scrollbar-color: #ccc transparent;
+    }
+    
+    #messages-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #messages-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    #messages-container::-webkit-scrollbar-thumb {
+        background-color: #ccc;
+        border-radius: 3px;
+    }
+    
+    .typing-animation {
+        display: inline-block;
+    }
+    
+    .typing-animation span {
+        display: inline-block;
+        animation: typing-dot 1.4s infinite ease-in-out;
+        margin: 0 1px;
+    }
+    
+    .typing-animation span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-animation span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing-dot {
+        0%, 80%, 100% { opacity: 0.3; }
+        40% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chatList = document.getElementById('chat-list');
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInputPanel = document.getElementById('message-input-panel');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const chatHeader = document.getElementById('chat-header');
+    const noChatSelected = document.getElementById('no-chat-selected');
+
+    let currentUserId = null; // Will be fetched
+    let activeChatSocket = null;
+    let activeChatId = null;
+
+    // --- WebSocket Connection ---
+    const connectToWebSocket = (chatId) => {
+        if (activeChatSocket) {
+            activeChatSocket.close();
+        }
+
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsPath = `${wsScheme}://${window.location.host}/ws/chat/${chatId}/`;
+        
+        activeChatSocket = new WebSocket(wsPath);
+
+        activeChatSocket.onopen = () => {
+            console.log(`WebSocket connected for chat ${chatId}`);
+            fetchMessages(chatId);
+        };
+
+        activeChatSocket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'chat_message') {
+                appendMessage(data.message, data.user_id);
+            } else if (data.type === 'last_50_messages') {
+                renderMessages(data.messages);
+            }
+        };
+
+        activeChatSocket.onclose = () => {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        activeChatSocket.onerror = (err) => {
+            console.error('WebSocket error:', err);
+        };
+    };
+    
+    // --- Initial Load ---
+    const initializeChat = async () => {
+        try {
+            const userResponse = await fetch('/api/staff/users/me/');
+            const userData = await userResponse.json();
+            currentUserId = userData.id;
+
+            const chatsResponse = await fetch('/api/communications/threads/');
+            const chats = await chatsResponse.json();
+            renderChatList(chats.results || chats);
+        } catch (error) {
+            console.error('Failed to initialize chat:', error);
+            chatList.innerHTML = '<p class="text-center text-danger">Помилка завантаження чатів.</p>';
+        }
+    };
+    
+    // --- Rendering ---
+    const renderChatList = (chats) => {
+        chatList.innerHTML = '';
+        if (!chats || chats.length === 0) {
+            chatList.innerHTML = '<p class="text-center p-3">У вас ще немає активних чатів.</p>';
+            return;
+        }
+
+        chats.forEach(chat => {
+            // Determine the other participant
+            const otherParticipant = chat.participants.find(p => p.id !== currentUserId);
+            if (!otherParticipant) return;
+
+            const chatItem = `
+                <div class="chat-item d-flex align-items-center" data-chat-id="${chat.id}" data-user-name="${otherParticipant.full_name}">
+                    <img src="${otherParticipant.avatar || '/static/frontend/img/default-avatar.svg'}" class="rounded-circle me-3" alt="${otherParticipant.full_name}" style="width: 50px; height: 50px;">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">${otherParticipant.full_name}</h6>
+                            <small class="text-muted">${chat.last_message ? new Date(chat.last_message.timestamp).toLocaleTimeString() : ''}</small>
+                        </div>
+                        <p class="mb-0 text-muted text-truncate" style="max-width: 180px;">${chat.last_message ? chat.last_message.content : 'Немає повідомлень'}</p>
+                    </div>
+                </div>`;
+            chatList.insertAdjacentHTML('beforeend', chatItem);
+        });
+    };
+
+    const renderMessages = (messages) => {
+        messagesContainer.innerHTML = '';
+        messages.forEach(msg => appendMessage(msg.content, msg.author.id, msg.timestamp));
+    };
+
+    const appendMessage = (messageContent, authorId, timestamp = new Date().toISOString()) => {
+        const isOwnMessage = authorId === currentUserId;
+        const messageDiv = `
+            <div class="message ${isOwnMessage ? 'own' : 'other'}">
+                <div class="message-bubble">${messageContent}</div>
+                <div class="message-time">${new Date(timestamp).toLocaleTimeString()}</div>
+            </div>`;
+        messagesContainer.insertAdjacentHTML('beforeend', messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
+    
+    // --- API Calls through WebSocket ---
+    const fetchMessages = (chatId) => {
+        activeChatSocket.send(JSON.stringify({
+            'command': 'fetch_messages',
+            'chat_id': chatId
+        }));
+    };
+
+    const sendMessage = (message) => {
+        if (activeChatSocket && activeChatSocket.readyState === WebSocket.OPEN) {
+            activeChatSocket.send(JSON.stringify({
+                'command': 'new_message',
+                'message': message,
+                'chat_id': activeChatId
+            }));
+        }
+    };
+
+    // --- Event Handlers ---
+    chatList.addEventListener('click', (e) => {
+        const chatItem = e.target.closest('.chat-item');
+        if (chatItem) {
+            // Remove active class from previous item
+            document.querySelectorAll('.chat-item.active').forEach(item => item.classList.remove('active'));
+            // Add active class to current item
+            chatItem.classList.add('active');
+
+            activeChatId = chatItem.dataset.chatId;
+            const userName = chatItem.dataset.userName;
+
+            // Update header and show message panel
+            document.getElementById('chat-user-name').textContent = userName;
+            chatHeader.style.display = '';
+            messageInputPanel.style.display = '';
+            noChatSelected.style.display = 'none';
+
+            connectToWebSocket(activeChatId);
+        }
+    });
+
+    messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+            sendMessage(message);
+            appendMessage(message, currentUserId); // Optimistically append
+            messageInput.value = '';
+        }
+    });
+
+    // --- New Chat Modal ---
+    document.getElementById('new-chat-btn').addEventListener('click', () => {
+        document.getElementById('newChatModal').style.display = 'block';
+        const modal = new bootstrap.Modal(document.getElementById('newChatModal'));
+        modal.show();
+        loadUsers();
+    });
+
+    document.getElementById('user-search').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        if (searchTerm.length >= 2) {
+            searchUsers(searchTerm);
+        } else if (searchTerm.length === 0) {
+            loadUsers();
+        }
+    });
+
+    const loadUsers = async () => {
+        try {
+            document.getElementById('users-loading').style.display = 'block';
+            const response = await fetch('/api/staff/users/');
+            const users = await response.json();
+            renderUsersList(users.results || users);
+        } catch (error) {
+            console.error('Error loading users:', error);
+            document.getElementById('users-list').innerHTML = '<p class="text-center text-danger">Помилка завантаження користувачів</p>';
+        } finally {
+            document.getElementById('users-loading').style.display = 'none';
+        }
+    };
+
+    const searchUsers = async (searchTerm) => {
+        try {
+            document.getElementById('users-loading').style.display = 'block';
+            const response = await fetch(`/api/staff/users/?search=${encodeURIComponent(searchTerm)}`);
+            const users = await response.json();
+            renderUsersList(users.results || users);
+        } catch (error) {
+            console.error('Error searching users:', error);
+            document.getElementById('users-list').innerHTML = '<p class="text-center text-danger">Помилка пошуку користувачів</p>';
+        } finally {
+            document.getElementById('users-loading').style.display = 'none';
+        }
+    };
+
+    const renderUsersList = (users) => {
+        const usersList = document.getElementById('users-list');
+        usersList.innerHTML = '';
+        
+        if (!users || users.length === 0) {
+            usersList.innerHTML = '<p class="text-center text-muted">Користувачів не знайдено</p>';
+            return;
+        }
+
+        users.forEach(user => {
+            // Skip current user
+            if (user.id === currentUserId) return;
+
+            const userItem = `
+                <div class="list-group-item list-group-item-action d-flex align-items-center user-item" data-user-id="${user.id}">
+                    <img src="${user.avatar || '/static/frontend/img/default-avatar.svg'}" class="rounded-circle me-3" alt="${user.full_name}" style="width: 40px; height: 40px;">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${user.full_name}</h6>
+                        <small class="text-muted">${user.email}</small>
+                    </div>
+                    <small class="badge bg-primary">${user.user_type}</small>
+                </div>`;
+            usersList.insertAdjacentHTML('beforeend', userItem);
+        });
+
+        // Add click handlers for user items
+        document.querySelectorAll('.user-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const userId = item.dataset.userId;
+                const userName = item.querySelector('h6').textContent;
+                startNewChat(userId, userName);
+            });
+        });
+    };
+
+    const startNewChat = async (userId, userName) => {
+        try {
+            const response = await fetch('/api/communications/threads/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    participants: [userId]
+                })
+            });
+
+            if (response.ok) {
+                const newChat = await response.json();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newChatModal'));
+                modal.hide();
+                
+                // Refresh chat list and select the new chat
+                initializeChat();
+                // You could also directly connect to the new chat
+                // connectToWebSocket(newChat.id);
+            } else {
+                showErrorMessage('Помилка створення чату');
+            }
+        } catch (error) {
+            console.error('Error starting new chat:', error);
+            showErrorMessage('Помилка створення чату');
+        }
+    };
+
+    // --- Helper Functions ---
+    function showErrorMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-danger border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        $('body').append(toast);
+        toast.toast('show');
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function showSuccessMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-success border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        $('body').append(toast);
+        toast.toast('show');
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    // --- Start the app ---
+    initializeChat();
+});
+</script>
+{% endblock %}

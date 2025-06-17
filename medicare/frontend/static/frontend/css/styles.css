@@ -1,0 +1,104 @@
+/* Загальні стилі */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+}
+
+/* Стилі для навігаційної панелі */
+.navbar-brand {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Стилі для бічної панелі */
+.sidebar {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 56px);
+    border-right: 1px solid #dee2e6;
+}
+
+.sidebar .nav-link {
+    color: #212529;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e9ecef;
+}
+
+.sidebar .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* Стилі для карток */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Стилі для кнопок */
+.btn {
+    border-radius: 0.25rem;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Стилі для форм */
+.form-control {
+    border-radius: 0.25rem;
+}
+
+/* Стилі для повідомлень */
+.alert-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 9999;
+    width: 300px;
+}
+
+.alert {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Стилі для мобільних пристроїв */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        visibility: hidden;
+        width: 0;
+    }
+    
+    .sidebar.show {
+        visibility: visible;
+        width: 240px;
+    }
+    
+    .content {
+        margin-left: 0 !important;
+    }
+}

@@ -1,0 +1,1043 @@
+
+{% extends 'frontend/base.html' %}
+
+{% block title %}Профіль пацієнта - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'frontend:patients' %}" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left me-2"></i>Назад до списку
+            </a>
+            <h1 class="h2 d-inline" id="patient-name">Завантаження...</h1>
+        </div>
+        <div>
+            <button class="btn btn-primary me-2" id="edit-profile-btn">
+                <i class="fas fa-edit me-2"></i>Редагувати
+            </button>
+            <button class="btn btn-success me-2" id="schedule-appointment-btn">
+                <i class="fas fa-calendar-plus me-2"></i>Записати на прийом
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="send-message-btn"><i class="fas fa-comment me-2"></i>Надіслати повідомлення</a></li>
+                    <li><a class="dropdown-item" href="#" id="print-profile-btn"><i class="fas fa-print me-2"></i>Друкувати профіль</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" id="archive-patient-btn"><i class="fas fa-archive me-2"></i>Архівувати</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основна інформація -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" id="patient-avatar" alt="Patient Avatar" width="150" height="150">
+                    <h4 id="patient-full-name">Ім'я пацієнта</h4>
+                    <p class="text-muted" id="patient-birth-info">Дата народження • Вік</p>
+                    <span class="badge bg-success" id="patient-status">Активний</span>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h5 id="total-appointments" class="text-primary">0</h5>
+                            <small class="text-muted">Прийомів</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 id="active-programs" class="text-success">0</h5>
+                            <small class="text-muted">Програм</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 id="last-visit-days" class="text-info">-</h5>
+                            <small class="text-muted">Днів тому</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="profile-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                                <i class="fas fa-user me-2"></i>Загальна інформація
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab">
+                                <i class="fas fa-heartbeat me-2"></i>Медична інформація
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab">
+                                <i class="fas fa-address-book me-2"></i>Контакти
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="profile-tab-content">
+                        <!-- Загальна інформація -->
+                        <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Особисті дані</h6>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td class="text-muted">Прізвище:</td>
+                                            <td id="patient-last-name">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Ім'я:</td>
+                                            <td id="patient-first-name">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">По батькові:</td>
+                                            <td id="patient-middle-name">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Стать:</td>
+                                            <td id="patient-gender">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Дата народження:</td>
+                                            <td id="patient-birth-date">-</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Документи</h6>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td class="text-muted">Паспорт:</td>
+                                            <td id="patient-passport">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">РНОКПП:</td>
+                                            <td id="patient-tax-number">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Номер медкарти:</td>
+                                            <td id="patient-card-number">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Дата реєстрації:</td>
+                                            <td id="patient-registration-date">-</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Медична інформація -->
+                        <div class="tab-pane fade" id="medical" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Основні показники</h6>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td class="text-muted">Зріст:</td>
+                                            <td id="patient-height">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Вага:</td>
+                                            <td id="patient-weight">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Група крові:</td>
+                                            <td id="patient-blood-type">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Резус-фактор:</td>
+                                            <td id="patient-rh-factor">-</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Хронічні захворювання</h6>
+                                    <div id="chronic-diseases">
+                                        <p class="text-muted">Завантаження...</p>
+                                    </div>
+                                    
+                                    <h6 class="mt-3">Алергії</h6>
+                                    <div id="allergies">
+                                        <p class="text-muted">Завантаження...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>Додаткова медична інформація</h6>
+                            <div id="additional-medical-info">
+                                <p class="text-muted">Завантаження...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Контактна інформація -->
+                        <div class="tab-pane fade" id="contact" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Основні контакти</h6>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td class="text-muted">Телефон:</td>
+                                            <td id="patient-phone">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Email:</td>
+                                            <td id="patient-email">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Адреса:</td>
+                                            <td id="patient-address">-</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Контакти для екстрених випадків</h6>
+                                    <div id="emergency-contacts">
+                                        <p class="text-muted">Завантаження...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Останні прийоми та програми -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Останні прийоми</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary" id="view-all-appointments">Всі прийоми</a>
+                </div>
+                <div class="card-body">
+                    <div id="recent-appointments">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Завантаження...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Програми реабілітації</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary" id="view-all-programs">Всі програми</a>
+                </div>
+                <div class="card-body">
+                    <div id="rehabilitation-programs">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Завантаження...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Медичні записи -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Медичні записи</h5>
+            <button class="btn btn-sm btn-primary" id="add-medical-record-btn">
+                <i class="fas fa-plus me-2"></i>Додати запис
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="medical-records">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Завантаження...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно редагування профілю -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редагування профілю пацієнта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-profile-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-first-name" class="form-label">Ім'я *</label>
+                                <input type="text" class="form-control" id="edit-first-name" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-last-name" class="form-label">Прізвище *</label>
+                                <input type="text" class="form-control" id="edit-last-name" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-middle-name" class="form-label">По батькові</label>
+                                <input type="text" class="form-control" id="edit-middle-name" name="middle_name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-birth-date" class="form-label">Дата народження *</label>
+                                <input type="date" class="form-control" id="edit-birth-date" name="birth_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-gender" class="form-label">Стать</label>
+                                <select class="form-select" id="edit-gender" name="gender">
+                                    <option value="">Не вказано</option>
+                                    <option value="male">Чоловіча</option>
+                                    <option value="female">Жіноча</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-phone" class="form-label">Телефон</label>
+                                <input type="tel" class="form-control" id="edit-phone" name="phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-email" name="email">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-address" class="form-label">Адреса</label>
+                        <textarea class="form-control" id="edit-address" name="address" rows="2"></textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>Медична інформація</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="edit-height" class="form-label">Зріст (см)</label>
+                                <input type="number" class="form-control" id="edit-height" name="height" min="50" max="250">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="edit-weight" class="form-label">Вага (кг)</label>
+                                <input type="number" class="form-control" id="edit-weight" name="weight" min="20" max="300" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="edit-blood-type" class="form-label">Група крові</label>
+                                <select class="form-select" id="edit-blood-type" name="blood_type">
+                                    <option value="">Не вказано</option>
+                                    <option value="O">I (O)</option>
+                                    <option value="A">II (A)</option>
+                                    <option value="B">III (B)</option>
+                                    <option value="AB">IV (AB)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="edit-rh-factor" class="form-label">Резус-фактор</label>
+                                <select class="form-select" id="edit-rh-factor" name="rh_factor">
+                                    <option value="">Не вказано</option>
+                                    <option value="positive">Позитивний</option>
+                                    <option value="negative">Негативний</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-chronic-diseases" class="form-label">Хронічні захворювання</label>
+                        <textarea class="form-control" id="edit-chronic-diseases" name="chronic_diseases" rows="2" placeholder="Перерахуйте хронічні захворювання через кому"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-allergies" class="form-label">Алергії</label>
+                        <textarea class="form-control" id="edit-allergies" name="allergies" rows="2" placeholder="Перерахуйте алергії через кому"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-additional-info" class="form-label">Додаткова медична інформація</label>
+                        <textarea class="form-control" id="edit-additional-info" name="additional_medical_info" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно додавання медичного запису -->
+<div class="modal fade" id="addMedicalRecordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати медичний запис</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-medical-record-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="record-title" class="form-label">Заголовок *</label>
+                        <input type="text" class="form-control" id="record-title" name="title" required placeholder="Наприклад: Огляд терапевта">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="record-date" class="form-label">Дата *</label>
+                                <input type="date" class="form-control" id="record-date" name="date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="record-type" class="form-label">Тип запису</label>
+                                <select class="form-select" id="record-type" name="type">
+                                    <option value="consultation">Консультація</option>
+                                    <option value="examination">Обстеження</option>
+                                    <option value="treatment">Лікування</option>
+                                    <option value="therapy">Терапія</option>
+                                    <option value="other">Інше</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="record-description" class="form-label">Опис *</label>
+                        <textarea class="form-control" id="record-description" name="description" rows="4" required placeholder="Детальний опис проведеного огляду, лікування або процедури"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="record-recommendations" class="form-label">Рекомендації</label>
+                        <textarea class="form-control" id="record-recommendations" name="recommendations" rows="3" placeholder="Рекомендації для пацієнта"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="record-files" class="form-label">Прикріпити файли</label>
+                        <input type="file" class="form-control" id="record-files" name="files" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <div class="form-text">Підтримувані формати: PDF, DOC, DOCX, JPG, PNG</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Додати запис</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .medical-record-item {
+        border-left: 4px solid #007bff;
+        transition: transform 0.2s;
+    }
+    
+    .medical-record-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .appointment-item {
+        border-left: 4px solid #28a745;
+    }
+    
+    .program-item {
+        border-left: 4px solid #fd7e14;
+    }
+    
+    .tag {
+        display: inline-block;
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.5rem;
+        margin: 0.125rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+    }
+    
+    .chronic-disease-tag {
+        background-color: #ffeaa7;
+        color: #d63031;
+    }
+    
+    .allergy-tag {
+        background-color: #fab1a0;
+        color: #e17055;
+    }
+    
+    .patient-avatar {
+        box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+    }
+    
+    .tab-content {
+        min-height: 300px;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: transparent;
+        border-bottom-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        const patientId = window.location.pathname.split('/')[2]; // Отримання ID з URL
+        
+        // Завантаження даних пацієнта
+        loadPatientProfile(patientId);
+        loadRecentAppointments(patientId);
+        loadRehabilitationPrograms(patientId);
+        loadMedicalRecords(patientId);
+        
+        // Обробка подій
+        $('#edit-profile-btn').click(() => openEditProfileModal());
+        $('#edit-profile-form').submit(handleProfileUpdate);
+        $('#add-medical-record-btn').click(() => $('#addMedicalRecordModal').modal('show'));
+        $('#add-medical-record-form').submit(handleAddMedicalRecord);
+        $('#schedule-appointment-btn').click(() => scheduleAppointment(patientId));
+        $('#send-message-btn').click(() => sendMessage(patientId));
+        $('#print-profile-btn').click(() => printProfile());
+        $('#archive-patient-btn').click(() => archivePatient(patientId));
+        
+        // Налаштування дати для медичного запису на сьогодні
+        $('#record-date').val(new Date().toISOString().split('T')[0]);
+    });
+    
+    // Завантаження профілю пацієнта
+    function loadPatientProfile(patientId) {
+        apiRequest(`/api/staff/patients/${patientId}/`)
+            .then(patient => {
+                displayPatientInfo(patient);
+                updatePatientStats(patient);
+            })
+            .catch(error => {
+                console.error('Error loading patient profile:', error);
+                showErrorMessage('Помилка завантаження профілю пацієнта');
+            });
+    }
+    
+    // Відображення інформації про пацієнта
+    function displayPatientInfo(patient) {
+        // Основна інформація
+        $('#patient-name').text(patient.full_name || 'Не вказано');
+        $('#patient-full-name').text(patient.full_name || 'Не вказано');
+        $('#patient-avatar').attr('src', patient.avatar || 'https://via.placeholder.com/150');
+        
+        // Вік та дата народження
+        if (patient.birth_date) {
+            const birthDate = new Date(patient.birth_date);
+            const age = calculateAge(birthDate);
+            $('#patient-birth-info').text(`${formatDate(patient.birth_date)} • ${age} років`);
+            $('#patient-birth-date').text(formatDate(patient.birth_date));
+        }
+        
+        // Статус
+        $('#patient-status').text(patient.is_active ? 'Активний' : 'Неактивний')
+            .removeClass().addClass(`badge ${patient.is_active ? 'bg-success' : 'bg-secondary'}`);
+        
+        // Особисті дані
+        $('#patient-first-name').text(patient.first_name || '-');
+        $('#patient-last-name').text(patient.last_name || '-');
+        $('#patient-middle-name').text(patient.middle_name || '-');
+        $('#patient-gender').text(getGenderText(patient.gender) || '-');
+        
+        // Документи
+        $('#patient-passport').text(patient.passport_number || '-');
+        $('#patient-tax-number').text(patient.tax_number || '-');
+        $('#patient-card-number').text(patient.medical_card_number || '-');
+        $('#patient-registration-date').text(formatDate(patient.date_joined) || '-');
+        
+        // Медична інформація
+        $('#patient-height').text(patient.height ? `${patient.height} см` : '-');
+        $('#patient-weight').text(patient.weight ? `${patient.weight} кг` : '-');
+        $('#patient-blood-type').text(patient.blood_type || '-');
+        $('#patient-rh-factor').text(getRhFactorText(patient.rh_factor) || '-');
+        
+        // Хронічні захворювання
+        displayTags(patient.chronic_diseases, '#chronic-diseases', 'chronic-disease-tag', 'Хронічні захворювання відсутні');
+        
+        // Алергії
+        displayTags(patient.allergies, '#allergies', 'allergy-tag', 'Алергії відсутні');
+        
+        // Додаткова медична інформація
+        $('#additional-medical-info').text(patient.additional_medical_info || 'Додаткова інформація відсутня');
+        
+        // Контактна інформація
+        $('#patient-phone').text(patient.phone || '-');
+        $('#patient-email').text(patient.email || '-');
+        $('#patient-address').text(patient.address || '-');
+        
+        // Контакти для екстрених випадків
+        displayEmergencyContacts(patient.emergency_contacts);
+    }
+    
+    // Оновлення статистики пацієнта
+    function updatePatientStats(patient) {
+        $('#total-appointments').text(patient.total_appointments || 0);
+        $('#active-programs').text(patient.active_programs || 0);
+        
+        if (patient.last_visit_date) {
+            const daysSinceLastVisit = calculateDaysSince(patient.last_visit_date);
+            $('#last-visit-days').text(daysSinceLastVisit);
+        }
+    }
+    
+    // Відображення тегів
+    function displayTags(dataString, containerId, tagClass, emptyMessage) {
+        const container = $(containerId);
+        
+        if (!dataString || dataString.trim() === '') {
+            container.html(`<p class="text-muted">${emptyMessage}</p>`);
+            return;
+        }
+        
+        const items = dataString.split(',').map(item => item.trim()).filter(item => item);
+        
+        if (items.length === 0) {
+            container.html(`<p class="text-muted">${emptyMessage}</p>`);
+            return;
+        }
+        
+        let html = '';
+        items.forEach(item => {
+            html += `<span class="tag ${tagClass}">${item}</span>`;
+        });
+        
+        container.html(html);
+    }
+    
+    // Відображення контактів для екстрених випадків
+    function displayEmergencyContacts(contacts) {
+        const container = $('#emergency-contacts');
+        
+        if (!contacts || contacts.length === 0) {
+            container.html('<p class="text-muted">Контакти не вказані</p>');
+            return;
+        }
+        
+        let html = '';
+        contacts.forEach(contact => {
+            html += `
+                <div class="mb-2">
+                    <strong>${contact.name}</strong> (${contact.relationship})<br>
+                    <small class="text-muted">${contact.phone}</small>
+                </div>
+            `;
+        });
+        
+        container.html(html);
+    }
+    
+    // Завантаження останніх прийомів
+    function loadRecentAppointments(patientId) {
+        apiRequest(`/api/consultations/?patient=${patientId}&limit=5&ordering=-datetime`)
+            .then(data => {
+                displayRecentAppointments(data.results || data);
+            })
+            .catch(error => {
+                console.error('Error loading appointments:', error);
+                $('#recent-appointments').html('<p class="text-center text-danger">Помилка завантаження прийомів</p>');
+            });
+    }
+    
+    // Відображення останніх прийомів
+    function displayRecentAppointments(appointments) {
+        if (appointments.length === 0) {
+            $('#recent-appointments').html('<p class="text-center text-muted">Прийомів поки що немає</p>');
+            return;
+        }
+        
+        let html = '';
+        appointments.forEach(appointment => {
+            const date = new Date(appointment.datetime);
+            const statusClass = getAppointmentStatusClass(appointment.status);
+            
+            html += `
+                <div class="appointment-item p-3 mb-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${appointment.type || 'Консультація'}</h6>
+                            <p class="mb-1 text-muted">${formatDateTime(appointment.datetime)}</p>
+                            <p class="mb-0 small">${appointment.notes || 'Примітки відсутні'}</p>
+                        </div>
+                        <span class="badge ${statusClass}">${getAppointmentStatusText(appointment.status)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#recent-appointments').html(html);
+    }
+    
+    // Завантаження програм реабілітації
+    function loadRehabilitationPrograms(patientId) {
+        apiRequest(`/api/programs/?patient=${patientId}&limit=5&ordering=-created_at`)
+            .then(data => {
+                displayRehabilitationPrograms(data.results || data);
+            })
+            .catch(error => {
+                console.error('Error loading programs:', error);
+                $('#rehabilitation-programs').html('<p class="text-center text-danger">Помилка завантаження програм</p>');
+            });
+    }
+    
+    // Відображення програм реабілітації
+    function displayRehabilitationPrograms(programs) {
+        if (programs.length === 0) {
+            $('#rehabilitation-programs').html('<p class="text-center text-muted">Програм реабілітації поки що немає</p>');
+            return;
+        }
+        
+        let html = '';
+        programs.forEach(program => {
+            const statusClass = getProgramStatusClass(program.status);
+            const progress = program.progress || 0;
+            
+            html += `
+                <div class="program-item p-3 mb-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${program.title}</h6>
+                            <p class="mb-2 text-muted small">${program.description || 'Опис відсутній'}</p>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>
+                            </div>
+                            <small class="text-muted">Прогрес: ${progress}%</small>
+                        </div>
+                        <span class="badge ${statusClass} ms-2">${getProgramStatusText(program.status)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#rehabilitation-programs').html(html);
+    }
+    
+    // Завантаження медичних записів
+    function loadMedicalRecords(patientId) {
+        apiRequest(`/api/medical-records/?patient=${patientId}&ordering=-date`)
+            .then(data => {
+                displayMedicalRecords(data.results || data);
+            })
+            .catch(error => {
+                console.error('Error loading medical records:', error);
+                $('#medical-records').html('<p class="text-center text-danger">Помилка завантаження медичних записів</p>');
+            });
+    }
+    
+    // Відображення медичних записів
+    function displayMedicalRecords(records) {
+        if (records.length === 0) {
+            $('#medical-records').html('<p class="text-center text-muted">Медичних записів поки що немає</p>');
+            return;
+        }
+        
+        let html = '';
+        records.forEach(record => {
+            html += `
+                <div class="medical-record-item p-3 mb-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${record.title}</h6>
+                            <p class="mb-2 text-muted">${record.description}</p>
+                            ${record.recommendations ? `<p class="mb-2"><strong>Рекомендації:</strong> ${record.recommendations}</p>` : ''}
+                            ${record.attachments && record.attachments.length > 0 ? 
+                                `<div class="mt-2">
+                                    <small class="text-muted">Прикріплені файли:</small>
+                                    ${record.attachments.map(file => 
+                                        `<a href="${file.url}" class="d-inline-block me-2 mt-1" target="_blank">
+                                            <i class="fas fa-file me-1"></i>${file.name}
+                                        </a>`
+                                    ).join('')}
+                                </div>` : ''
+                            }
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">${formatDate(record.date)}</small>
+                            <br>
+                            <span class="badge bg-secondary">${getRecordTypeText(record.type)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#medical-records').html(html);
+    }
+    
+    // Відкриття модального вікна редагування
+    function openEditProfileModal() {
+        const patientId = window.location.pathname.split('/')[2];
+        
+        apiRequest(`/api/staff/patients/${patientId}/`)
+            .then(patient => {
+                // Заповнення форми
+                $('#edit-first-name').val(patient.first_name || '');
+                $('#edit-last-name').val(patient.last_name || '');
+                $('#edit-middle-name').val(patient.middle_name || '');
+                $('#edit-birth-date').val(patient.birth_date || '');
+                $('#edit-gender').val(patient.gender || '');
+                $('#edit-phone').val(patient.phone || '');
+                $('#edit-email').val(patient.email || '');
+                $('#edit-address').val(patient.address || '');
+                $('#edit-height').val(patient.height || '');
+                $('#edit-weight').val(patient.weight || '');
+                $('#edit-blood-type').val(patient.blood_type || '');
+                $('#edit-rh-factor').val(patient.rh_factor || '');
+                $('#edit-chronic-diseases').val(patient.chronic_diseases || '');
+                $('#edit-allergies').val(patient.allergies || '');
+                $('#edit-additional-info').val(patient.additional_medical_info || '');
+                
+                $('#editProfileModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading patient data:', error);
+                showErrorMessage('Помилка завантаження даних пацієнта');
+            });
+    }
+    
+    // Обробка оновлення профілю
+    function handleProfileUpdate(e) {
+        e.preventDefault();
+        
+        const patientId = window.location.pathname.split('/')[2];
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        apiRequest(`/api/staff/patients/${patientId}/`, 'PATCH', data)
+            .then(response => {
+                $('#editProfileModal').modal('hide');
+                showSuccessMessage('Профіль успішно оновлено');
+                loadPatientProfile(patientId);
+            })
+            .catch(error => {
+                console.error('Error updating patient profile:', error);
+                showErrorMessage('Помилка оновлення профілю');
+            });
+    }
+    
+    // Обробка додавання медичного запису
+    function handleAddMedicalRecord(e) {
+        e.preventDefault();
+        
+        const patientId = window.location.pathname.split('/')[2];
+        const formData = new FormData(e.target);
+        formData.append('patient', patientId);
+        
+        apiRequest('/api/medical-records/', 'POST', formData, true) // true для FormData
+            .then(response => {
+                $('#addMedicalRecordModal').modal('hide');
+                $('#add-medical-record-form')[0].reset();
+                showSuccessMessage('Медичний запис успішно додано');
+                loadMedicalRecords(patientId);
+            })
+            .catch(error => {
+                console.error('Error adding medical record:', error);
+                showErrorMessage('Помилка додавання медичного запису');
+            });
+    }
+    
+    // Запис на прийом
+    function scheduleAppointment(patientId) {
+        window.location.href = `/schedule/?patient=${patientId}`;
+    }
+    
+    // Надіслати повідомлення
+    function sendMessage(patientId) {
+        window.location.href = `/chat/?user=${patientId}`;
+    }
+    
+    // Друк профілю
+    function printProfile() {
+        window.print();
+    }
+    
+    // Архівування пацієнта
+    function archivePatient(patientId) {
+        if (confirm('Ви впевнені, що хочете архівувати цього пацієнта?')) {
+            apiRequest(`/api/staff/patients/${patientId}/archive/`, 'POST')
+                .then(response => {
+                    showSuccessMessage('Пацієнта архівовано');
+                    window.location.href = '/patients/';
+                })
+                .catch(error => {
+                    console.error('Error archiving patient:', error);
+                    showErrorMessage('Помилка архівування пацієнта');
+                });
+        }
+    }
+    
+    // Допоміжні функції
+    function calculateAge(birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        return age;
+    }
+    
+    function calculateDaysSince(dateStr) {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const diffTime = Math.abs(today - date);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('uk-UA');
+    }
+    
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return '';
+        const date = new Date(dateTimeStr);
+        return date.toLocaleString('uk-UA');
+    }
+    
+    function getGenderText(gender) {
+        switch(gender) {
+            case 'male': return 'Чоловіча';
+            case 'female': return 'Жіноча';
+            default: return 'Не вказано';
+        }
+    }
+    
+    function getRhFactorText(rhFactor) {
+        switch(rhFactor) {
+            case 'positive': return 'Позитивний';
+            case 'negative': return 'Негативний';
+            default: return 'Не вказано';
+        }
+    }
+    
+    function getAppointmentStatusClass(status) {
+        switch(status) {
+            case 'scheduled': return 'bg-primary';
+            case 'in_progress': return 'bg-success';
+            case 'completed': return 'bg-secondary';
+            case 'cancelled': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    function getAppointmentStatusText(status) {
+        switch(status) {
+            case 'scheduled': return 'Заплановано';
+            case 'in_progress': return 'В процесі';
+            case 'completed': return 'Завершено';
+            case 'cancelled': return 'Скасовано';
+            default: return 'Невідомо';
+        }
+    }
+    
+    function getProgramStatusClass(status) {
+        switch(status) {
+            case 'active': return 'bg-success';
+            case 'completed': return 'bg-primary';
+            case 'pending': return 'bg-warning';
+            case 'paused': return 'bg-secondary';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    function getProgramStatusText(status) {
+        switch(status) {
+            case 'active': return 'Активна';
+            case 'completed': return 'Завершена';
+            case 'pending': return 'Очікує';
+            case 'paused': return 'Призупинена';
+            default: return 'Невідомо';
+        }
+    }
+    
+    function getRecordTypeText(type) {
+        switch(type) {
+            case 'consultation': return 'Консультація';
+            case 'examination': return 'Обстеження';
+            case 'treatment': return 'Лікування';
+            case 'therapy': return 'Терапія';
+            case 'other': return 'Інше';
+            default: return 'Запис';
+        }
+    }
+    
+    function showSuccessMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+    
+    function showErrorMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+</script>
+{% endblock %}

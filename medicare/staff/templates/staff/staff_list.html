@@ -1,0 +1,246 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Список персоналу{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Список персоналу</h1>
+            <p class="text-muted mb-0">Управління профілями співробітників</p>
+        </div>
+        <div>
+            <a href="{% url 'staff:staff_profile_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Додати співробітника
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="specialization" class="form-label">Спеціалізація</label>
+                    <select class="form-select" name="specialization" id="specialization">
+                        <option value="">Всі спеціалізації</option>
+                        <option value="therapist">Терапевт</option>
+                        <option value="physiotherapist">Фізіотерапевт</option>
+                        <option value="nurse">Медсестра</option>
+                        <option value="doctor">Лікар</option>
+                        <option value="admin">Адміністратор</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Пошук</label>
+                    <input type="text" class="form-control" name="search" id="search" 
+                           placeholder="Ім'я, прізвище або спеціалізація" value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-search"></i> Пошук
+                    </button>
+                    <a href="{% url 'staff:staff_profile_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Очистити
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Staff List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-people text-primary me-2"></i>
+                Співробітники
+                {% if staff_profiles %}
+                    <span class="badge bg-secondary ms-2">{{ staff_profiles|length }}</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if staff_profiles %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Співробітник</th>
+                                <th>Спеціалізація</th>
+                                <th>Ліцензія</th>
+                                <th>Пацієнти</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in staff_profiles %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                 style="width: 40px; height: 40px;">
+                                                <span class="text-white fw-bold">
+                                                    {{ profile.user.first_name|first }}{{ profile.user.last_name|first }}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ profile.user.get_full_name }}</h6>
+                                                <small class="text-muted">{{ profile.user.email }}</small>
+                                                {% if profile.user.phone_number %}
+                                                    <br><small class="text-muted">{{ profile.user.phone_number }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ profile.get_specialization_display|default:profile.specialization }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">—</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ profile.patients.count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if profile.user.is_active %}
+                                            <span class="badge bg-success">Активний</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Неактивний</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'staff:staff_profile_detail' profile.pk %}" 
+                                               class="btn btn-outline-primary" title="Переглянути">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'staff:staff_profile_edit' profile.pk %}" 
+                                               class="btn btn-outline-secondary" title="Редагувати">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'staff:user_detail' profile.user.pk %}" 
+                                               class="btn btn-outline-info" title="Деталі користувача">
+                                                <i class="bi bi-person"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialization %}&specialization={{ request.GET.specialization }}{% endif %}">Перша</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialization %}&specialization={{ request.GET.specialization }}{% endif %}">Попередня</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialization %}&specialization={{ request.GET.specialization }}{% endif %}">Наступна</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.specialization %}&specialization={{ request.GET.specialization }}{% endif %}">Остання</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Співробітники не знайдені</h5>
+                    <p class="text-muted">Почніть з додавання першого співробітника до системи</p>
+                    <a href="{% url 'staff:staff_profile_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Додати співробітника
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Всього співробітників</h6>
+                            <h3 class="mb-0">{{ staff_profiles|length }}</h3>
+                        </div>
+                        <i class="bi bi-people fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Активні</h6>
+                            <h3 class="mb-0">{{ staff_profiles|length }}</h3>
+                        </div>
+                        <i class="bi bi-check-circle fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Лікарі</h6>
+                            <h3 class="mb-0">{{ doctor_count|default:0 }}</h3>
+                        </div>
+                        <i class="bi bi-person-badge fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Терапевти</h6>
+                            <h3 class="mb-0">{{ therapist_count|default:0 }}</h3>
+                        </div>
+                        <i class="bi bi-heart-pulse fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set filter values from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const specialization = urlParams.get('specialization');
+    
+    if (specialization) {
+        document.getElementById('specialization').value = specialization;
+    }
+});
+</script>
+{% endblock %}

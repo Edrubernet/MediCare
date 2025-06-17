@@ -1,0 +1,229 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Панель персоналу{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Панель управління персоналом</h2>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_staff }}</h4>
+                            <p class="mb-0">Загальний персонал</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_doctors }}</h4>
+                            <p class="mb-0">Лікарі</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-md fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ active_sessions }}</h4>
+                            <p class="mb-0">Активні сесії</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ pending_approvals }}</h4>
+                            <p class="mb-0">Очікують схвалення</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Recent Staff Activities -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Останні дії персоналу</h5>
+                    <a href="{% url 'staff:staff_list' %}" class="btn btn-outline-primary btn-sm">
+                        Переглянути всіх
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Співробітник</th>
+                                        <th>Спеціалізація</th>
+                                        <th>Останній вхід</th>
+                                        <th>Статус</th>
+                                        <th>Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for staff in recent_activities %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar me-2">
+                                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <span class="text-white fw-bold">
+                                                                {{ staff.user.first_name|first }}{{ staff.user.last_name|first }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ staff.user.get_full_name }}</h6>
+                                                        <small class="text-muted">{{ staff.user.email }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ staff.specialization|default:"Не вказано" }}</td>
+                                            <td>{{ staff.user.last_login|date:"d.m.Y H:i"|default:"Ніколи" }}</td>
+                                            <td>
+                                                {% if staff.user.is_active %}
+                                                    <span class="badge bg-success">Активний</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Неактивний</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'staff:staff_detail' staff.id %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'staff:staff_update' staff.id %}" 
+                                                   class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Немає даних про активність персоналу</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Швидкі дії</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'staff:user_create' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Додати користувача
+                        </a>
+                        <a href="{% url 'staff:staff_create' %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Додати співробітника
+                        </a>
+                        <a href="{% url 'staff:user_list' %}" class="btn btn-info">
+                            <i class="fas fa-list"></i> Всі користувачі
+                        </a>
+                        <a href="{% url 'staff:schedule_list' %}" class="btn btn-warning">
+                            <i class="fas fa-calendar"></i> Розклади роботи
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Стан системи</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Завантаження сервера</span>
+                            <span class="text-success">15%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: 15%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Використання пам'яті</span>
+                            <span class="text-warning">45%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Дисковий простір</span>
+                            <span class="text-info">23%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" style="width: 23%"></div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            Останнє оновлення: {{ current_time|date:"d.m.Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

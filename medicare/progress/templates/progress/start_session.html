@@ -1,0 +1,191 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Розпочати сесію вправ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Розпочати сесію вправ</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'progress:progress_dashboard' %}">Прогрес</a></li>
+                    <li class="breadcrumb-item active">Нова сесія</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-play-circle text-primary me-2"></i>
+                        Розпочати нову сесію тренувань
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.program.id_for_label }}" class="form-label">
+                                <i class="bi bi-clipboard-check me-1"></i>
+                                Програма реабілітації
+                            </label>
+                            {{ form.program }}
+                            {% if form.program.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.program.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Оберіть програму реабілітації для виконання вправ.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                Дата сесії
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Нотатки (необов'язково)
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Додайте будь-які нотатки про плани на цю сесію або особливі вказівки.
+                            </div>
+                        </div>
+
+                        <!-- Інформаційна панель -->
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Що далі?</strong>
+                            Після створення сесії ви зможете додавати виконані вправи та відстежувати свій прогрес.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'progress:progress_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Скасувати
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-play-circle me-1"></i>
+                                Розпочати сесію
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Швидкі поради -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        Поради для ефективного тренування
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Виконуйте розминку перед вправами
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Слухайте своє тіло
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Тримайте правильну техніку
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Не перевантажуйтесь
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Записуйте свої відчуття
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Пийте достатньо води
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation classes
+    const form = document.querySelector('form');
+    const formControls = form.querySelectorAll('select, textarea, input');
+    
+    formControls.forEach(control => {
+        control.classList.add('form-control');
+        
+        if (control.type === 'date') {
+            // Set today's date as default
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0];
+            if (!control.value) {
+                control.value = todayString;
+            }
+        }
+        
+        if (control.tagName === 'TEXTAREA') {
+            control.rows = 4;
+            control.placeholder = 'Додайте нотатки про плани на цю сесію, цілі або особливі вказівки...';
+        }
+        
+        if (control.tagName === 'SELECT') {
+            // Add Bootstrap select styling if needed
+            control.classList.add('form-select');
+        }
+    });
+    
+    // Focus on the first field
+    const firstField = form.querySelector('select, input');
+    if (firstField) {
+        firstField.focus();
+    }
+});
+</script>
+{% endblock %}

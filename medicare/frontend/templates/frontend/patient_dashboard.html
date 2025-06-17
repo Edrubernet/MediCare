@@ -1,0 +1,352 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Панель керування пацієнта - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">Панель керування пацієнта</h1>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Моїх лікарів</h5>
+                            <h2 class="display-6 fw-bold" id="doctor-count">...</h2>
+                        </div>
+                        <i class="fas fa-user-md fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="/my-doctors/" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Активних програм</h5>
+                            <h2 class="display-6 fw-bold" id="program-count">...</h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="/my-programs/" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Завдань на сьогодні</h5>
+                            <h2 class="display-6 fw-bold" id="task-count">...</h2>
+                        </div>
+                        <i class="fas fa-tasks fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="#" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Повідомлень</h5>
+                            <h2 class="display-6 fw-bold" id="message-count">...</h2>
+                        </div>
+                        <i class="fas fa-envelope fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="#" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Мої лікарі</h5>
+                    <a href="/my-doctors/" class="btn btn-sm btn-outline-primary">Усі лікарі</a>
+                </div>
+                <div class="card-body">
+                    <div id="my-doctors">
+                        <p class="text-center">Завантаження...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Мої програми реабілітації</h5>
+                    <a href="/my-programs/" class="btn btn-sm btn-outline-primary">Усі програми</a>
+                </div>
+                <div class="card-body">
+                    <div id="my-programs">
+                        <p class="text-center">Завантаження...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Прогрес виконання вправ</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="progressChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Greet the user
+        const userResponse = await fetch('/api/staff/users/me/');
+        if (!userResponse.ok) throw new Error('Failed to fetch user data');
+        const userData = await userResponse.json();
+        const patientName = userData.first_name || 'Пацієнт';
+        document.querySelector('h1.h2').textContent = `Панель керування, ${patientName}`;
+
+        loadDoctorData();
+        loadProgramData();
+
+    } catch (error) {
+        console.error('Failed to initialize dashboard:', error);
+        document.getElementById('doctor-count').textContent = 'Error';
+        document.getElementById('program-count').textContent = 'Error';
+    }
+});
+
+async function loadDoctorData() {
+    try {
+        const response = await fetch('/api/patients/profiles/');
+        if (!response.ok) throw new Error('Failed to fetch patient profile');
+        const profiles = await response.json();
+        
+        // Since a patient sees only their own profile, we take the first result
+        const profile = profiles.results ? profiles.results[0] : (Array.isArray(profiles) ? profiles[0] : null);
+
+        if (!profile) throw new Error('Patient profile not found');
+
+        const doctorCount = profile.assigned_doctors.length;
+        document.getElementById('doctor-count').textContent = doctorCount;
+
+        const doctorsListEl = document.getElementById('my-doctors');
+        doctorsListEl.innerHTML = ''; // Clear loading state
+
+        if (doctorCount > 0) {
+            let doctorsHtml = '<ul class="list-group list-group-flush">';
+            profile.assigned_doctors.forEach(doctor => {
+                doctorsHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-user-md me-2 text-primary"></i>
+                            ${doctor.full_name}
+                        </div>
+                        <span class="badge bg-info rounded-pill">${doctor.specialization || 'Лікар'}</span>
+                    </li>
+                `;
+            });
+            doctorsHtml += '</ul>';
+            doctorsListEl.innerHTML = doctorsHtml;
+        } else {
+            doctorsListEl.innerHTML = '<p class="text-center">У вас ще немає призначених лікарів</p>';
+        }
+
+    } catch (error) {
+        console.error('Error loading doctors:', error);
+        document.getElementById('doctor-count').textContent = '0';
+        document.getElementById('my-doctors').innerHTML = '<p class="text-center">Помилка завантаження даних</p>';
+    }
+}
+
+async function loadProgramData() {
+    try {
+        const response = await fetch('/api/programs/');
+        if (!response.ok) throw new Error('Failed to fetch programs');
+        const programs = await response.json();
+
+        const activePrograms = programs.results ? programs.results.filter(p => p.status === 'active') : programs.filter(p => p.status === 'active');
+        document.getElementById('program-count').textContent = activePrograms.length;
+
+        const programsListEl = document.getElementById('my-programs');
+        programsListEl.innerHTML = ''; // Clear loading state
+
+        if (activePrograms.length > 0) {
+            let programsHtml = '<ul class="list-group list-group-flush">';
+            activePrograms.forEach(program => {
+                programsHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="/my-programs/${program.id}/">${program.title}</a>
+                        <span class="badge bg-success rounded-pill">Активна</span>
+                    </li>
+                `;
+            });
+            programsHtml += '</ul>';
+            programsListEl.innerHTML = programsHtml;
+        } else {
+            programsListEl.innerHTML = '<p class="text-center">У вас немає активних програм реабілітації.</p>';
+        }
+
+    } catch (error) {
+        console.error('Error loading programs:', error);
+        document.getElementById('program-count').textContent = '0';
+        document.getElementById('my-programs').innerHTML = '<p class="text-center">Помилка завантаження програм.</p>';
+    }
+}
+
+// Встановлюємо реальні лічильники завдань і повідомлень
+document.getElementById('task-count').textContent = '{{ task_count|default:0 }}';
+document.getElementById('message-count').textContent = '{{ message_count|default:0 }}';
+
+// Створюємо графік прогресу
+createProgressChart();
+
+async function createProgressChart() {
+    try {
+        // Отримуємо дані прогресу з API
+        const response = await fetch('/api/progress/exercise-sessions/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Помилка завантаження даних прогресу');
+        }
+        
+        const sessions = await response.json();
+        
+        // Групуємо дані по датах
+        const progressData = processProgressData(sessions);
+        
+        // Створюємо графік
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: progressData.labels,
+                datasets: [{
+                    label: 'Завершені сеанси',
+                    data: progressData.completed,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }, {
+                    label: 'Всього сеансів',
+                    data: progressData.total,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Помилка створення графіка:', error);
+        // Відображаємо заглушку у разі помилки
+        const canvas = document.getElementById('progressChart');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Графік прогресу буде доступний', canvas.width/2, canvas.height/2 - 10);
+        ctx.fillText('після виконання перших вправ', canvas.width/2, canvas.height/2 + 10);
+    }
+}
+
+function processProgressData(sessions) {
+    // Групуємо сеанси по тижнях
+    const weeklyData = {};
+    
+    sessions.forEach(session => {
+        const date = new Date(session.date);
+        const weekStart = getWeekStart(date);
+        const weekKey = weekStart.toISOString().split('T')[0];
+        
+        if (!weeklyData[weekKey]) {
+            weeklyData[weekKey] = {
+                total: 0,
+                completed: 0
+            };
+        }
+        
+        weeklyData[weekKey].total++;
+        if (session.completed) {
+            weeklyData[weekKey].completed++;
+        }
+    });
+    
+    // Перетворюємо в масиви для Chart.js
+    const sortedWeeks = Object.keys(weeklyData).sort();
+    const labels = sortedWeeks.map(week => {
+        const date = new Date(week);
+        return date.toLocaleDateString('uk-UA', { month: 'short', day: 'numeric' });
+    });
+    
+    const totalData = sortedWeeks.map(week => weeklyData[week].total);
+    const completedData = sortedWeeks.map(week => weeklyData[week].completed);
+    
+    return {
+        labels: labels,
+        total: totalData,
+        completed: completedData
+    };
+}
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Понеділок як початок тижня
+    return new Date(d.setDate(diff));
+}
+
+</script>
+{% endblock %}

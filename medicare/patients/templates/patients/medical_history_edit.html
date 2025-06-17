@@ -1,0 +1,75 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Редагувати медичну історію{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Медична історія - {{ patient.user.get_full_name }}</h4>
+            <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_conditions" class="form-label">Хронічні захворювання</label>
+                            <textarea class="form-control" id="id_conditions" name="conditions" 
+                                      rows="4" placeholder="Опишіть хронічні захворювання пацієнта...">{{ medical_history.conditions|default:"" }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_allergies" class="form-label">Алергії</label>
+                            <textarea class="form-control" id="id_allergies" name="allergies" 
+                                      rows="4" placeholder="Укажіть відомі алергічні реакції...">{{ medical_history.allergies|default:"" }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_medications" class="form-label">Поточні медикаменти</label>
+                            <textarea class="form-control" id="id_medications" name="medications" 
+                                      rows="4" placeholder="Список поточних медикаментів з дозуванням...">{{ medical_history.medications|default:"" }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_surgeries" class="form-label">Попередні операції</label>
+                            <textarea class="form-control" id="id_surgeries" name="surgeries" 
+                                      rows="4" placeholder="Опишіть попередні хірургічні втручання...">{{ medical_history.surgeries|default:"" }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_family_history" class="form-label">Сімейний анамнез</label>
+                    <textarea class="form-control" id="id_family_history" name="family_history" 
+                              rows="3" placeholder="Опишіть спадкові захворювання в родині...">{{ medical_history.family_history|default:"" }}</textarea>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Важливо:</strong> Вся медична інформація є конфіденційною та захищеною.
+                    Заповнюйте поля якомога детальніше для кращого лікування.
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">
+                        Скасувати
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Зберегти медичну історію
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

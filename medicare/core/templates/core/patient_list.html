@@ -1,0 +1,268 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{% if show_all %}Всі пацієнти{% else %}Мої пацієнти{% endif %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="bi bi-people text-primary me-2"></i>
+                {% if show_all %}Всі пацієнти{% else %}Мої пацієнти{% endif %}
+            </h1>
+            {% if user.user_type == 'admin' %}
+                <a href="{% url 'staff:user_create' %}" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Додати пацієнта
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Навігація між списками -->
+{% if user.user_type == 'doctor' %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="btn-group" role="group">
+            <a href="{% url 'core:patient_list' %}" 
+               class="btn {% if not show_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-person-check me-2"></i>
+                Мої пацієнти
+            </a>
+            <a href="{% url 'core:all_patients_list' %}" 
+               class="btn {% if show_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-people me-2"></i>
+                Всі пацієнти
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Пошук та фільтри -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Пошук</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               value="{{ search_query }}"
+                               placeholder="Ім'я, прізвище, email...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="gender" class="form-label">Стать</label>
+                        <select class="form-select" id="gender" name="gender">
+                            <option value="">Всі</option>
+                            <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Чоловіча</option>
+                            <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Жіноча</option>
+                            <option value="O" {% if request.GET.gender == 'O' %}selected{% endif %}>Інша</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search me-1"></i>Шукати
+                        </button>
+                        <a href="{% url 'core:patient_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Очистити
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Результати -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    Знайдено пацієнтів: {{ patients.paginator.count }}
+                </h5>
+                {% if search_query %}
+                    <span class="badge bg-primary">Пошук: "{{ search_query }}"</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if patients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Пацієнт</th>
+                                    <th>Контакти</th>
+                                    <th>Стать</th>
+                                    <th>Призначені лікарі</th>
+                                    <th>Дата реєстрації</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for patient in patients %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-person text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ patient.user.get_full_name }}</div>
+                                                    <small class="text-muted">ID: {{ patient.id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <i class="bi bi-envelope me-1"></i>{{ patient.user.email }}
+                                            </div>
+                                            {% if patient.user.phone_number %}
+                                                <div class="small text-muted">
+                                                    <i class="bi bi-telephone me-1"></i>{{ patient.user.phone_number }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if patient.gender %}
+                                                <span class="badge bg-{{ patient.gender|yesno:'info,danger,secondary' }}">
+                                                    {{ patient.get_gender_display }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">Не вказано</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if patient.assigned_doctors.count > 0 %}
+                                                <div class="small">
+                                                    {% for doctor in patient.assigned_doctors.all|slice:":2" %}
+                                                        <div>{{ doctor.user.get_full_name }}</div>
+                                                    {% endfor %}
+                                                    {% if patient.assigned_doctors.count > 2 %}
+                                                        <small class="text-muted">+{{ patient.assigned_doctors.count|add:"-2" }} ще</small>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">Не призначено</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div>{{ patient.user.date_joined|date:"d.m.Y" }}</div>
+                                            <small class="text-muted">{{ patient.user.date_joined|date:"H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'core:patient_detail' patient.id %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Переглянути">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="{% url 'patients:patient_edit' patient.id %}" 
+                                                   class="btn btn-sm btn-outline-secondary" 
+                                                   title="Редагувати">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'patients:add_rehabilitation_record' patient.id %}" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Додати запис">
+                                                    <i class="bi bi-plus"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Пагінація -->
+                    {% if patients.has_other_pages %}
+                        <div class="card-footer">
+                            <nav aria-label="Пагінація пацієнтів">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if patients.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ patients.previous_page_number }}">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in patients.paginator.page_range %}
+                                        {% if patients.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > patients.number|add:'-3' and num < patients.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if patients.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ patients.next_page_number }}">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-person-x text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3">Пацієнтів не знайдено</h5>
+                        {% if search_query %}
+                            <p class="text-muted">Спробуйте змінити критерії пошуку</p>
+                            <a href="{% url 'core:patient_list' %}" class="btn btn-outline-primary">
+                                Показати всіх пацієнтів
+                            </a>
+                        {% else %}
+                            <p class="text-muted">У системі поки що немає зареєстрованих пацієнтів</p>
+                            {% if user.user_type == 'admin' %}
+                                <a href="{% url 'staff:user_create' %}" class="btn btn-primary">
+                                    Додати першого пацієнта
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Автоматичний пошук при введенні тексту (з затримкою)
+let searchTimeout;
+document.getElementById('search').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        // В майбутньому можна додати AJAX пошук
+    }, 500);
+});
+
+// Збереження позиції прокрутки при поверненні зі сторінки деталей
+if (sessionStorage.getItem('patientListScrollPos')) {
+    window.scrollTo(0, sessionStorage.getItem('patientListScrollPos'));
+    sessionStorage.removeItem('patientListScrollPos');
+}
+
+// Збереження позиції при переході на деталі
+document.querySelectorAll('a[href*="patient_detail"]').forEach(link => {
+    link.addEventListener('click', function() {
+        sessionStorage.setItem('patientListScrollPos', window.scrollY);
+    });
+});
+</script>
+{% endblock %}

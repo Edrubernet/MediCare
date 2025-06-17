@@ -1,0 +1,333 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Панель керування лікаря - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">Панель керування лікаря</h1>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Пацієнтів</h5>
+                            <h2 class="display-6 fw-bold" id="patient-count">...</h2>
+                        </div>
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'patient_list' %}" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Активних програм</h5>
+                            <h2 class="display-6 fw-bold" id="program-count">...</h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="#" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Запланованих сьогодні</h5>
+                            <h2 class="display-6 fw-bold" id="appointment-count">...</h2>
+                        </div>
+                        <i class="fas fa-calendar-check fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="#" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title">Повідомлень</h5>
+                            <h2 class="display-6 fw-bold" id="message-count">...</h2>
+                        </div>
+                        <i class="fas fa-envelope fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="#" class="text-white text-decoration-none">Детальніше</a>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Останні пацієнти</h5>
+                    <a href="{% url 'patient_list' %}" class="btn btn-sm btn-outline-primary">Усі пацієнти</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Ім'я пацієнта</th>
+                                    <th>Статус</th>
+                                    <th>Дата останнього прийому</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-patients">
+                                <tr>
+                                    <td colspan="3" class="text-center">Завантаження...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Прийоми на сьогодні</h5>
+                    <a href="{% url 'staff:appointment_list' %}" class="btn btn-sm btn-outline-primary">Всі прийоми</a>
+                </div>
+                <div class="card-body">
+                    <div id="today-schedule">
+                        <p class="text-center">Завантаження...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // First, get the current user's data to find their staff profile ID
+        const userResponse = await fetch('/api/staff/users/me/');
+        if (!userResponse.ok) throw new Error('Failed to fetch user data');
+        const userData = await userResponse.json();
+        
+        // Let's greet the user
+        const doctorName = userData.first_name || 'Лікар';
+        document.querySelector('h1.h2').textContent = `Панель керування, ${doctorName}`;
+
+        // Now we can fetch data for this specific doctor
+        // Since we don't have a direct staff profile ID here, we'll rely on the API to filter for us
+        loadPatientData();
+        loadProgramData();
+        loadAppointmentData();
+        loadScheduleData();
+
+    } catch (error) {
+        console.error('Failed to initialize dashboard:', error);
+        // Display a generic error on the page
+        document.getElementById('patient-count').textContent = 'Error';
+        document.getElementById('program-count').textContent = 'Error';
+        document.getElementById('appointment-count').textContent = 'Error';
+    }
+});
+
+async function loadPatientData() {
+    try {
+        const response = await fetch('/api/patients/profiles/');
+        if (!response.ok) throw new Error('Failed to fetch patients');
+        const patients = await response.json();
+
+        const patientCountEl = document.getElementById('patient-count');
+        patientCountEl.textContent = patients.results ? patients.results.length : (Array.isArray(patients) ? patients.length : 0);
+
+        const recentPatientsTbody = document.getElementById('recent-patients');
+        recentPatientsTbody.innerHTML = ''; // Clear loading state
+
+        const patientsToShow = patients.results ? patients.results.slice(0, 5) : patients.slice(0, 5);
+
+        if (patientsToShow.length > 0) {
+            patientsToShow.forEach(patient => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="/patients/${patient.id}/">${patient.user.first_name} ${patient.user.last_name}</a></td>
+                    <td><span class="badge bg-success">Активний</span></td>
+                    <td>${patient.rehabilitation_history.length > 0 ? new Date(patient.rehabilitation_history[0].created_at).toLocaleDateString() : 'N/A'}</td>
+                `;
+                recentPatientsTbody.appendChild(row);
+            });
+        } else {
+            recentPatientsTbody.innerHTML = '<tr><td colspan="3" class="text-center">Немає пацієнтів</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading patients:', error);
+        document.getElementById('patient-count').textContent = '0';
+        document.getElementById('recent-patients').innerHTML = '<tr><td colspan="3" class="text-center">Помилка завантаження</td></tr>';
+    }
+}
+
+async function loadProgramData() {
+    try {
+        const response = await fetch('/api/programs/');
+        if (!response.ok) throw new Error('Failed to fetch programs');
+        const programs = await response.json();
+        
+        const activePrograms = programs.results ? programs.results.filter(p => p.status === 'active') : programs.filter(p => p.status === 'active');
+        document.getElementById('program-count').textContent = activePrograms.length;
+    } catch (error) {
+        console.error('Error loading programs:', error);
+        document.getElementById('program-count').textContent = '0';
+    }
+}
+
+async function loadAppointmentData() {
+    try {
+        const response = await fetch('/api/consultations/');
+        if (!response.ok) throw new Error('Failed to fetch consultations');
+        const consultations = await response.json();
+
+        const today = new Date().toISOString().slice(0, 10);
+        const todayAppointments = consultations.results ? 
+            consultations.results.filter(c => c.start_time.startsWith(today)) : 
+            consultations.filter(c => c.start_time.startsWith(today));
+            
+        document.getElementById('appointment-count').textContent = todayAppointments.length;
+    } catch (error) {
+        console.error('Error loading appointments:', error);
+        document.getElementById('appointment-count').textContent = '0';
+    }
+}
+
+async function loadScheduleData() {
+    try {
+        const response = await fetch('/staff/api/staff-profiles/me/appointments/today/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const appointments = await response.json();
+            displayTodaySchedule(appointments);
+        } else {
+            throw new Error('Failed to load schedule');
+        }
+    } catch (error) {
+        console.error('Error loading schedule:', error);
+        document.getElementById('today-schedule').innerHTML = '<p class="text-center text-muted">Помилка завантаження розкладу</p>';
+    }
+}
+
+function displayTodaySchedule(appointments) {
+    const scheduleContainer = document.getElementById('today-schedule');
+    
+    if (appointments.length === 0) {
+        scheduleContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-calendar-check text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 mb-0">Сьогодні немає запланованих зустрічей</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    appointments.forEach(appointment => {
+        const statusClass = getStatusClass(appointment.status);
+        const statusText = getStatusText(appointment.status);
+        
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock me-2 text-primary"></i>
+                        <strong>${appointment.start_time} - ${appointment.end_time}</strong>
+                    </div>
+                    <div class="mt-1">
+                        <i class="bi bi-person me-2 text-muted"></i>
+                        <span>${appointment.patient_name}</span>
+                    </div>
+                    <div class="mt-1 small text-muted">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        ${getAppointmentTypeText(appointment.appointment_type)}
+                    </div>
+                    ${appointment.description ? `<div class="mt-1 small text-muted">${appointment.description}</div>` : ''}
+                </div>
+                <div class="text-end">
+                    <span class="badge ${statusClass}">${statusText}</span>
+                    <div class="mt-1">
+                        <small class="text-muted">${appointment.duration_minutes} хв</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    scheduleContainer.innerHTML = html;
+}
+
+function getStatusClass(status) {
+    const statusClasses = {
+        'scheduled': 'bg-warning',
+        'confirmed': 'bg-info',
+        'in_progress': 'bg-primary',
+        'completed': 'bg-success',
+        'cancelled': 'bg-danger',
+        'no_show': 'bg-secondary'
+    };
+    return statusClasses[status] || 'bg-secondary';
+}
+
+function getStatusText(status) {
+    const statusTexts = {
+        'scheduled': 'Заплановано',
+        'confirmed': 'Підтверджено',
+        'in_progress': 'В процесі',
+        'completed': 'Завершено',
+        'cancelled': 'Скасовано',
+        'no_show': 'Не з\'явився'
+    };
+    return statusTexts[status] || 'Невідомо';
+}
+
+function getAppointmentTypeText(type) {
+    const typeTexts = {
+        'consultation': 'Консультація',
+        'therapy_session': 'Терапевтичний сеанс',
+        'assessment': 'Оцінка',
+        'follow_up': 'Повторний огляд'
+    };
+    return typeTexts[type] || 'Зустріч';
+}
+
+// TODO: Implement message count when chat API is ready.
+document.getElementById('message-count').textContent = '0';
+
+</script>
+{% endblock %}

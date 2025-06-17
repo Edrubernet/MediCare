@@ -1,0 +1,692 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ patient.user.get_full_name }} - {{ block.super }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Головна</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:patient_list' %}">Пацієнти</a></li>
+        <li class="breadcrumb-item active">{{ patient.user.get_full_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="bi bi-person-circle text-primary me-2"></i>
+                {{ patient.user.get_full_name }}
+            </h1>
+            <div class="btn-group">
+                <a href="{% url 'patients:patient_edit' patient.id %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>Редагувати
+                </a>
+                <a href="{% url 'patients:add_rehabilitation_record' patient.id %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle me-1"></i>Додати запис
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Основна інформація -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-vcard text-primary me-2"></i>
+                    Особиста інформація
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Повне ім'я</label>
+                            <div class="fw-bold">{{ patient.user.get_full_name }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <div>
+                                <i class="bi bi-envelope me-1"></i>{{ patient.user.email }}
+                            </div>
+                        </div>
+                        {% if patient.user.phone_number %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Телефон</label>
+                                <div>
+                                    <i class="bi bi-telephone me-1"></i>{{ patient.user.phone_number }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if patient.date_of_birth %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Дата народження</label>
+                                <div>{{ patient.date_of_birth|date:"d.m.Y" }}</div>
+                            </div>
+                        {% endif %}
+                        {% if patient.gender %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Стать</label>
+                                <div>
+                                    <span class="badge bg-{{ patient.gender|yesno:'info,danger,secondary' }}">
+                                        {{ patient.get_gender_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Дата реєстрації</label>
+                            <div>{{ patient.user.date_joined|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if patient.address %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Адреса</label>
+                                <div>{{ patient.address }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Контакт для екстрених ситуацій -->
+                {% if patient.emergency_contact_name or patient.emergency_contact_phone %}
+                    <div class="border-top pt-3">
+                        <h6 class="text-muted mb-3">Контакт для екстрених ситуацій</h6>
+                        <div class="row">
+                            {% if patient.emergency_contact_name %}
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">Ім'я</label>
+                                    <div>{{ patient.emergency_contact_name }}</div>
+                                </div>
+                            {% endif %}
+                            {% if patient.emergency_contact_phone %}
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">Телефон</label>
+                                    <div>
+                                        <i class="bi bi-telephone me-1"></i>{{ patient.emergency_contact_phone }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Бічна панель -->
+    <div class="col-lg-4">
+        <!-- Призначені лікарі -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-badge text-success me-2"></i>
+                    Призначені лікарі
+                </h6>
+                {% if user.user_type == 'admin' %}
+                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#assignDoctorModal">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if patient.assigned_doctors.count > 0 %}
+                    {% for doctor in patient.assigned_doctors.all %}
+                        <div class="d-flex align-items-center mb-2 {% if not forloop.last %}border-bottom pb-2{% endif %}">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person-badge text-success"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small">{{ doctor.user.get_full_name }}</div>
+                                {% if doctor.specialization %}
+                                    <small class="text-muted">{{ doctor.specialization }}</small>
+                                {% endif %}
+                            </div>
+                            {% if user.user_type == 'admin' %}
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeDoctorFromPatient({{ doctor.id }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-person-x" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Лікарі не призначені</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Швидка статистика -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up text-info me-2"></i>
+                    Статистика
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 border-end">
+                        <div class="h4 text-primary mb-0">{{ programs.count }}</div>
+                        <small class="text-muted">Програми</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 text-success mb-0">{{ appointments.count }}</div>
+                        <small class="text-muted">Прийоми</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6 border-end">
+                        <div class="h4 text-info mb-0">{{ rehabilitation_history.count }}</div>
+                        <small class="text-muted">Записи</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 text-warning mb-0">{{ patient.assigned_doctors.count }}</div>
+                        <small class="text-muted">Лікарі</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Вкладки з додатковою інформацією -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="programs-tab" data-bs-toggle="tab" data-bs-target="#programs" type="button">
+                            <i class="bi bi-clipboard-check me-1"></i>Програми реабілітації
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button">
+                            <i class="bi bi-calendar-event me-1"></i>Прийоми
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progress" type="button">
+                            <i class="bi bi-graph-up me-1"></i>Прогрес
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button">
+                            <i class="bi bi-heart-pulse me-1"></i>Медична історія
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Програми реабілітації -->
+                    <div class="tab-pane fade show active" id="programs" role="tabpanel">
+                        {% if programs %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Назва програми</th>
+                                            <th>Статус</th>
+                                            <th>Період</th>
+                                            <th>Прогрес</th>
+                                            <th>Дії</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for program in programs %}
+                                            <tr>
+                                                <td>{{ program.title }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ program.status|yesno:'success,warning,secondary' }}">
+                                                        {{ program.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ program.start_date|date:"d.m.Y" }} - {{ program.end_date|date:"d.m.Y" }}</td>
+                                                <td>
+                                                    <div class="progress" style="width: 100px;">
+                                                        <div class="progress-bar" style="width: {{ program.progress_percentage }}%"></div>
+                                                    </div>
+                                                    <small>{{ program.progress_percentage }}%</small>
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'programs:program_detail' program.id %}" class="btn btn-sm btn-outline-primary">Переглянути</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-clipboard-x text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Програми реабілітації відсутні</p>
+                                <a href="{% url 'programs:program_create' %}?patient={{ patient.id }}" class="btn btn-primary">Створити програму</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Прийоми -->
+                    <div class="tab-pane fade" id="appointments" role="tabpanel">
+                        {% if appointments %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата та час</th>
+                                            <th>Лікар</th>
+                                            <th>Тип</th>
+                                            <th>Статус</th>
+                                            <th>Дії</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for appointment in appointments %}
+                                            <tr>
+                                                <td>
+                                                    {{ appointment.date|date:"d.m.Y" }}<br>
+                                                    <small class="text-muted">{{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}</small>
+                                                </td>
+                                                <td>{{ appointment.doctor.user.get_full_name }}</td>
+                                                <td>{{ appointment.get_appointment_type_display }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ appointment.status|yesno:'success,warning,secondary' }}">
+                                                        {{ appointment.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'consultation:consultation_detail' appointment.id %}" class="btn btn-sm btn-outline-primary">Переглянути</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Прийоми відсутні</p>
+                                <a href="{% url 'consultation:consultation_create' %}?patient={{ patient.id }}" class="btn btn-primary">Запланувати прийом</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Прогрес -->
+                    <div class="tab-pane fade" id="progress" role="tabpanel">
+                        {% if progress_logs %}
+                            <!-- Тут буде список записів прогресу -->
+                            <p>Записи прогресу будуть відображені тут</p>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Записи прогресу відсутні</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Медична історія -->
+                    <div class="tab-pane fade" id="medical" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6>Медична історія</h6>
+                            <a href="{% url 'patients:medical_history_edit' patient.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i>Редагувати
+                            </a>
+                        </div>
+                        
+                        <!-- Медична історія -->
+                        {% if medical_history %}
+                            <div class="row">
+                                {% if medical_history.conditions %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-2">
+                                            <i class="bi bi-heart-pulse me-2"></i>Хронічні захворювання
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ medical_history.conditions|linebreaks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if medical_history.allergies %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-2">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>Алергії
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ medical_history.allergies|linebreaks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if medical_history.medications %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-2">
+                                            <i class="bi bi-capsule me-2"></i>Поточні медикаменти
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ medical_history.medications|linebreaks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if medical_history.surgeries %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-2">
+                                            <i class="bi bi-bandaid me-2"></i>Попередні операції
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ medical_history.surgeries|linebreaks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if medical_history.family_history %}
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-muted mb-2">
+                                            <i class="bi bi-people me-2"></i>Сімейна історія
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ medical_history.family_history|linebreaks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Історія реабілітації -->
+                            {% if rehabilitation_history %}
+                                <hr class="my-4">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-clipboard-pulse me-2"></i>Історія реабілітації
+                                </h6>
+                                <div class="timeline">
+                                    {% for record in rehabilitation_history %}
+                                        <div class="card mb-3">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ record.injury_type }}</strong>
+                                                    <small class="text-muted ms-2">{{ record.injury_date|date:"d.m.Y" }}</small>
+                                                </div>
+                                                {% if record.doctor %}
+                                                    <small class="text-muted">
+                                                        Лікар: {{ record.doctor.user.get_full_name }}
+                                                    </small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-body">
+                                                <h6>Діагноз:</h6>
+                                                <p class="mb-2">{{ record.diagnosis }}</p>
+                                                {% if record.notes %}
+                                                    <h6>Примітки:</h6>
+                                                    <p class="mb-0">{{ record.notes }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-footer text-muted small">
+                                                Додано: {{ record.created_at|date:"d.m.Y H:i" }}
+                                                {% if record.updated_at != record.created_at %}
+                                                    | Оновлено: {{ record.updated_at|date:"d.m.Y H:i" }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-heart-pulse" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Медична історія не заповнена</p>
+                                <a href="{% url 'patients:medical_history_edit' patient.id %}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>Додати медичну історію
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно для призначення лікаря -->
+{% if user.user_type == 'admin' %}
+<div class="modal fade" id="assignDoctorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Призначити лікаря</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="doctorsList">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Завантаження...</span>
+                        </div>
+                        <p class="mt-2">Завантаження списку лікарів...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+<!-- Hidden CSRF token for AJAX -->
+
+{% block extra_js %}
+<script>
+const patientId = {{ patient.id }};
+
+// Get CSRF token from cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Get CSRF token from meta tag, cookie, or template
+let csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (!csrfToken) {
+    csrfToken = getCookie('csrftoken');
+}
+if (!csrfToken) {
+    csrfToken = '{{ csrf_token }}';
+}
+
+console.log('CSRF Token loaded:', csrfToken);
+
+// Збереження активної вкладки
+document.addEventListener('DOMContentLoaded', function() {
+    // Відновлення активної вкладки з localStorage
+    const activeTab = localStorage.getItem('activePatientTab');
+    if (activeTab) {
+        const tabElement = document.querySelector(`[data-bs-target="${activeTab}"]`);
+        if (tabElement) {
+            const tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
+    }
+    
+    // Збереження активної вкладки
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tabElement => {
+        tabElement.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('activePatientTab', e.target.getAttribute('data-bs-target'));
+        });
+    });
+    
+    // Завантаження списку лікарів при відкритті модального вікна
+    const assignDoctorModal = document.getElementById('assignDoctorModal');
+    if (assignDoctorModal) {
+        assignDoctorModal.addEventListener('show.bs.modal', loadAvailableDoctors);
+    }
+});
+
+// Завантаження доступних лікарів
+function loadAvailableDoctors() {
+    console.log('Loading available doctors for patient:', patientId);
+    fetch(`/ajax/available-doctors/?patient_id=${patientId}`)
+        .then(response => {
+            console.log('Doctors response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Doctors data:', data);
+            const doctorsList = document.getElementById('doctorsList');
+            if (data.doctors && data.doctors.length > 0) {
+                let html = '<div class="list-group">';
+                data.doctors.forEach(doctor => {
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">${doctor.name}</div>
+                                <small class="text-muted">${doctor.specialization}</small>
+                                <br><small class="text-muted">${doctor.email}</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="assignDoctor(${doctor.id})">
+                                Призначити
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                doctorsList.innerHTML = html;
+            } else {
+                doctorsList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-person-check" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Всі доступні лікарі вже призначені</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('doctorsList').innerHTML = `
+                <div class="alert alert-danger">
+                    Помилка завантаження списку лікарів
+                </div>
+            `;
+        });
+}
+
+// Призначення лікаря
+function assignDoctor(doctorId) {
+    console.log('Assigning doctor:', doctorId, 'to patient:', patientId);
+    
+    console.log('CSRF Token:', csrfToken);
+    
+    if (!csrfToken) {
+        alert('CSRF токен не знайдено. Перезавантажте сторінку.');
+        return;
+    }
+    
+    fetch('/ajax/assign-doctor/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            patient_id: patientId,
+            doctor_id: doctorId
+        })
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            // Закриваємо модальне вікно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('assignDoctorModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Перезавантажуємо сторінку для оновлення списку лікарів
+            location.reload();
+        } else {
+            alert('Помилка: ' + (data.error || 'Невідома помилка'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка призначення лікаря: ' + error.message);
+    });
+}
+
+// Видалення лікаря
+function removeDoctorFromPatient(doctorId) {
+    if (!confirm('Ви впевнені, що хочете видалити цього лікаря з пацієнта?')) {
+        return;
+    }
+    
+    fetch('/ajax/remove-doctor/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            patient_id: patientId,
+            doctor_id: doctorId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Перезавантажуємо сторінку для оновлення списку лікарів
+            location.reload();
+        } else {
+            alert('Помилка: ' + (data.error || 'Невідома помилка'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка видалення лікаря');
+    });
+}
+</script>
+{% endblock %}

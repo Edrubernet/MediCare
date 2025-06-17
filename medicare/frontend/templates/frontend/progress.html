@@ -1,0 +1,1698 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Мій прогрес - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Заголовок -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="h2 mb-3">Мій прогрес реабілітації</h1>
+            <p class="text-muted">Відстежуйте свій прогрес та досягнення в реабілітації</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary" id="add-progress-btn">
+                    <i class="fas fa-plus me-2"></i>Додати запис
+                </button>
+                <button class="btn btn-primary" id="generate-report-btn">
+                    <i class="fas fa-file-pdf me-2"></i>Звіт
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Загальна статистика -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="progress-ring mb-3">
+                        <svg class="progress-ring-svg" width="80" height="80">
+                            <circle class="progress-ring-circle-bg" cx="40" cy="40" r="30"></circle>
+                            <circle class="progress-ring-circle" cx="40" cy="40" r="30" id="overall-progress-ring"></circle>
+                        </svg>
+                        <div class="progress-ring-text" id="overall-progress-text">0%</div>
+                    </div>
+                    <h5 class="mb-1">Загальний прогрес</h5>
+                    <small class="text-muted">За весь час</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                    <h4 class="mb-1" id="completed-sessions">0</h4>
+                    <h6 class="text-muted">Завершених сесій</h6>
+                    <small class="text-success" id="sessions-change">+0 цього тижня</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h4 class="mb-1" id="improvement-score">0</h4>
+                    <h6 class="text-muted">Бал покращення</h6>
+                    <small class="text-primary" id="score-change">+0 за місяць</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-target fa-3x text-warning mb-3"></i>
+                    <h4 class="mb-1" id="goals-achieved">0</h4>
+                    <h6 class="text-muted">Досягнуті цілі</h6>
+                    <small class="text-warning" id="goals-total">з 0 загалом</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Навігація по категоріям -->
+        <div class="col-lg-3">
+            <div class="card sticky-top" style="top: 100px;">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Категорії прогресу
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush" id="progress-categories">
+                    <a href="#" class="list-group-item list-group-item-action active" data-category="all">
+                        <i class="fas fa-chart-line me-2"></i>Весь прогрес
+                        <span class="badge bg-primary rounded-pill float-end" id="all-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="mobility">
+                        <i class="fas fa-walking me-2"></i>Мобільність
+                        <span class="badge bg-secondary rounded-pill float-end" id="mobility-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="strength">
+                        <i class="fas fa-dumbbell me-2"></i>Сила
+                        <span class="badge bg-secondary rounded-pill float-end" id="strength-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="flexibility">
+                        <i class="fas fa-expand-arrows-alt me-2"></i>Гнучкість
+                        <span class="badge bg-secondary rounded-pill float-end" id="flexibility-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="balance">
+                        <i class="fas fa-balance-scale me-2"></i>Рівновага
+                        <span class="badge bg-secondary rounded-pill float-end" id="balance-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="pain">
+                        <i class="fas fa-heart-broken me-2"></i>Біль
+                        <span class="badge bg-secondary rounded-pill float-end" id="pain-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="cognitive">
+                        <i class="fas fa-brain me-2"></i>Когнітивні функції
+                        <span class="badge bg-secondary rounded-pill float-end" id="cognitive-count">0</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-category="speech">
+                        <i class="fas fa-comments me-2"></i>Мовлення
+                        <span class="badge bg-secondary rounded-pill float-end" id="speech-count">0</span>
+                    </a>
+                </div>
+
+                <!-- Фільтри по періоду -->
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3">Період</h6>
+                    <select class="form-select mb-3" id="period-filter">
+                        <option value="week">Цей тиждень</option>
+                        <option value="month" selected>Цей місяць</option>
+                        <option value="quarter">Цей квартал</option>
+                        <option value="year">Цей рік</option>
+                        <option value="all">Весь час</option>
+                    </select>
+
+                    <h6 class="card-subtitle mb-3">Тип відображення</h6>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="view-type" id="chart-view" checked>
+                        <label class="btn btn-outline-primary" for="chart-view">
+                            <i class="fas fa-chart-line"></i>
+                        </label>
+                        <input type="radio" class="btn-check" name="view-type" id="list-view">
+                        <label class="btn btn-outline-primary" for="list-view">
+                            <i class="fas fa-list"></i>
+                        </label>
+                        <input type="radio" class="btn-check" name="view-type" id="calendar-view">
+                        <label class="btn btn-outline-primary" for="calendar-view">
+                            <i class="fas fa-calendar"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основний контент -->
+        <div class="col-lg-9">
+            <!-- Графік прогресу -->
+            <div class="card mb-4" id="progress-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0" id="chart-title">Прогрес за місяць</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="chart-type" id="line-chart" checked>
+                        <label class="btn btn-outline-secondary" for="line-chart">Лінійний</label>
+                        <input type="radio" class="btn-check" name="chart-type" id="bar-chart">
+                        <label class="btn btn-outline-secondary" for="bar-chart">Стовпчастий</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="progress-chart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Останні записи прогресу -->
+            <div class="card mb-4" id="progress-list-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Останні записи</h5>
+                    <button class="btn btn-sm btn-outline-primary" id="view-all-records">
+                        Переглянути всі
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="progress-records">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Завантаження...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Календар прогресу -->
+            <div class="card" id="progress-calendar-card" style="display: none;">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Календар прогресу</h5>
+                </div>
+                <div class="card-body">
+                    <div id="progress-calendar"></div>
+                </div>
+            </div>
+
+            <!-- Цілі та завдання -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-bullseye me-2"></i>Поточні цілі
+                            </h5>
+                            <button class="btn btn-sm btn-outline-primary" id="add-goal-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="current-goals">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Завантаження...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-trophy me-2"></i>Досягнення
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="achievements">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Завантаження...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно додавання запису прогресу -->
+<div class="modal fade" id="addProgressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати запис прогресу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-progress-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="progress-category" class="form-label">Категорія</label>
+                                <select class="form-select" id="progress-category" name="category" required>
+                                    <option value="">Оберіть категорію</option>
+                                    <option value="mobility">Мобільність</option>
+                                    <option value="strength">Сила</option>
+                                    <option value="flexibility">Гнучкість</option>
+                                    <option value="balance">Рівновага</option>
+                                    <option value="pain">Біль</option>
+                                    <option value="cognitive">Когнітивні функції</option>
+                                    <option value="speech">Мовлення</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="progress-date" class="form-label">Дата</label>
+                                <input type="date" class="form-control" id="progress-date" name="date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="progress-metric" class="form-label">Показник</label>
+                        <select class="form-select" id="progress-metric" name="metric" required>
+                            <option value="">Спочатку оберіть категорію</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="progress-value" class="form-label">Значення</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="progress-value" name="value" step="0.1" required>
+                                    <span class="input-group-text" id="progress-unit">од.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="progress-rating" class="form-label">Самооцінка (1-10)</label>
+                                <input type="range" class="form-range" id="progress-rating" name="rating" min="1" max="10" value="5">
+                                <div class="d-flex justify-content-between">
+                                    <small>1 - Дуже погано</small>
+                                    <small id="rating-value">5</small>
+                                    <small>10 - Відмінно</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="progress-notes" class="form-label">Примітки</label>
+                        <textarea class="form-control" id="progress-notes" name="notes" rows="3" placeholder="Додайте коментарі про ваш стан, вправи, які виконували, тощо..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="progress-mood" class="form-label">Настрій</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="mood" value="1" id="mood-1">
+                            <label class="btn btn-outline-danger" for="mood-1">😞</label>
+                            <input type="radio" class="btn-check" name="mood" value="2" id="mood-2">
+                            <label class="btn btn-outline-warning" for="mood-2">😐</label>
+                            <input type="radio" class="btn-check" name="mood" value="3" id="mood-3" checked>
+                            <label class="btn btn-outline-primary" for="mood-3">🙂</label>
+                            <input type="radio" class="btn-check" name="mood" value="4" id="mood-4">
+                            <label class="btn btn-outline-success" for="mood-4">😊</label>
+                            <input type="radio" class="btn-check" name="mood" value="5" id="mood-5">
+                            <label class="btn btn-outline-success" for="mood-5">😄</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="progress-share" name="share_with_doctor">
+                            <label class="form-check-label" for="progress-share">
+                                Поділитися з лікарем
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно додавання цілі -->
+<div class="modal fade" id="addGoalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати нову ціль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-goal-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="goal-title" class="form-label">Назва цілі</label>
+                        <input type="text" class="form-control" id="goal-title" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="goal-description" class="form-label">Опис</label>
+                        <textarea class="form-control" id="goal-description" name="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="goal-category" class="form-label">Категорія</label>
+                                <select class="form-select" id="goal-category" name="category" required>
+                                    <option value="">Оберіть категорію</option>
+                                    <option value="mobility">Мобільність</option>
+                                    <option value="strength">Сила</option>
+                                    <option value="flexibility">Гнучкість</option>
+                                    <option value="balance">Рівновага</option>
+                                    <option value="pain">Біль</option>
+                                    <option value="cognitive">Когнітивні функції</option>
+                                    <option value="speech">Мовлення</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="goal-target-date" class="form-label">Цільова дата</label>
+                                <input type="date" class="form-control" id="goal-target-date" name="target_date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="goal-current-value" class="form-label">Поточне значення</label>
+                                <input type="number" class="form-control" id="goal-current-value" name="current_value" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="goal-target-value" class="form-label">Цільове значення</label>
+                                <input type="number" class="form-control" id="goal-target-value" name="target_value" step="0.1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="goal-priority" class="form-label">Пріоритет</label>
+                        <select class="form-select" id="goal-priority" name="priority">
+                            <option value="low">Низький</option>
+                            <option value="medium" selected>Середній</option>
+                            <option value="high">Високий</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-bullseye me-2"></i>Створити ціль
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно деталей запису -->
+<div class="modal fade" id="progressDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Деталі запису</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Категорія:</strong>
+                        <span id="detail-category"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Дата:</strong>
+                        <span id="detail-date"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Показник:</strong>
+                        <span id="detail-metric"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Значення:</strong>
+                        <span id="detail-value"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Самооцінка:</strong>
+                        <span id="detail-rating"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Настрій:</strong>
+                        <span id="detail-mood"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong>Примітки:</strong>
+                    <p id="detail-notes" class="mt-2"></p>
+                </div>
+                <div class="progress-trend mb-3">
+                    <strong>Тренд:</strong>
+                    <span id="detail-trend"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-outline-primary" id="edit-progress-btn">
+                    <i class="fas fa-edit me-2"></i>Редагувати
+                </button>
+                <button type="button" class="btn btn-outline-danger" id="delete-progress-btn">
+                    <i class="fas fa-trash me-2"></i>Видалити
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно редагування цілі -->
+<div class="modal fade" id="editGoalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редагувати ціль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-goal-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-goal-id">
+                    
+                    <div class="mb-3">
+                        <label for="edit-goal-title" class="form-label">Назва цілі</label>
+                        <input type="text" class="form-control" id="edit-goal-title" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-goal-description" class="form-label">Опис</label>
+                        <textarea class="form-control" id="edit-goal-description" name="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-goal-category" class="form-label">Категорія</label>
+                                <select class="form-select" id="edit-goal-category" name="category" required>
+                                    <option value="">Оберіть категорію</option>
+                                    <option value="mobility">Мобільність</option>
+                                    <option value="strength">Сила</option>
+                                    <option value="flexibility">Гнучкість</option>
+                                    <option value="balance">Рівновага</option>
+                                    <option value="pain">Біль</option>
+                                    <option value="cognitive">Когнітивні функції</option>
+                                    <option value="speech">Мовлення</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-goal-target-date" class="form-label">Цільова дата</label>
+                                <input type="date" class="form-control" id="edit-goal-target-date" name="target_date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-goal-current-value" class="form-label">Поточне значення</label>
+                                <input type="number" class="form-control" id="edit-goal-current-value" name="current_value" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-goal-target-value" class="form-label">Цільове значення</label>
+                                <input type="number" class="form-control" id="edit-goal-target-value" name="target_value" step="0.1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-goal-priority" class="form-label">Пріоритет</label>
+                        <select class="form-select" id="edit-goal-priority" name="priority">
+                            <option value="low">Низький</option>
+                            <option value="medium">Середній</option>
+                            <option value="high">Високий</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Зберегти зміни
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-ring {
+        position: relative;
+        display: inline-block;
+    }
+
+    .progress-ring-svg {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle-bg {
+        stroke: #e9ecef;
+        stroke-width: 4;
+        fill: transparent;
+    }
+
+    .progress-ring-circle {
+        stroke: #007bff;
+        stroke-width: 4;
+        stroke-linecap: round;
+        fill: transparent;
+        stroke-dasharray: 188.4;
+        stroke-dashoffset: 188.4;
+        transition: stroke-dashoffset 0.5s ease-in-out;
+    }
+
+    .progress-ring-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    .progress-record {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .progress-record:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .progress-record.improved {
+        border-left: 4px solid #28a745;
+        background: linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, transparent 100%);
+    }
+
+    .progress-record.declined {
+        border-left: 4px solid #dc3545;
+        background: linear-gradient(90deg, rgba(220, 53, 69, 0.1) 0%, transparent 100%);
+    }
+
+    .progress-record.stable {
+        border-left: 4px solid #ffc107;
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+    }
+
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        margin-right: 1rem;
+    }
+
+    .category-mobility { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .category-strength { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .category-flexibility { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .category-balance { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .category-pain { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .category-cognitive { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .category-speech { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+
+    .trend-up {
+        color: #28a745;
+    }
+
+    .trend-down {
+        color: #dc3545;
+    }
+
+    .trend-stable {
+        color: #ffc107;
+    }
+
+    .goal-card {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .goal-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .goal-progress {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+
+    .goal-progress-bar {
+        height: 100%;
+        transition: width 0.5s ease-in-out;
+    }
+
+    .priority-high { border-left: 4px solid #dc3545; }
+    .priority-medium { border-left: 4px solid #ffc107; }
+    .priority-low { border-left: 4px solid #28a745; }
+
+    .achievement-badge {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+        color: #333;
+        border-radius: 15px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        display: inline-block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    }
+
+    .mood-emoji {
+        font-size: 1.5rem;
+    }
+
+    .rating-display {
+        display: flex;
+        align-items: center;
+    }
+
+    .rating-bar {
+        width: 60px;
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin: 0 0.5rem;
+        overflow: hidden;
+    }
+
+    .rating-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .rating-1, .rating-2, .rating-3 { background-color: #dc3545; }
+    .rating-4, .rating-5, .rating-6 { background-color: #ffc107; }
+    .rating-7, .rating-8, .rating-9, .rating-10 { background-color: #28a745; }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    .calendar-day {
+        position: relative;
+        min-height: 100px;
+        border: 1px solid #e9ecef;
+        padding: 0.5rem;
+    }
+
+    .calendar-day.has-progress {
+        background-color: #e3f2fd;
+    }
+
+    .calendar-day.has-progress::after {
+        content: '';
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 8px;
+        height: 8px;
+        background-color: #2196f3;
+        border-radius: 50%;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #007bff, #28a745);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: -2rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #007bff;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #007bff;
+    }
+
+    @media (max-width: 768px) {
+        .progress-record {
+            padding: 0.75rem;
+        }
+
+        .category-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 1rem;
+            margin-right: 0.75rem;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        .timeline {
+            padding-left: 1.5rem;
+        }
+
+        .timeline-dot {
+            left: -1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        let currentCategory = 'all';
+        let currentPeriod = 'month';
+        let currentViewType = 'chart';
+        let progressChart = null;
+        let selectedProgressId = null;
+
+        // Ініціалізація
+        loadOverallStats();
+        loadProgressRecords();
+        loadGoals();
+        loadAchievements();
+        setupEventHandlers();
+
+        // Встановлення поточної дати
+        $('#progress-date').val(new Date().toISOString().split('T')[0]);
+
+        // Встановлення мінімальної дати для цілей
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#goal-target-date').attr('min', tomorrow.toISOString().split('T')[0]);
+    });
+
+    // Налаштування обробників подій
+    function setupEventHandlers() {
+        // Категорії прогресу
+        $('#progress-categories a').click(function(e) {
+            e.preventDefault();
+            $('#progress-categories a').removeClass('active');
+            $(this).addClass('active');
+            currentCategory = $(this).data('category');
+            loadProgressRecords();
+            updateChart();
+        });
+
+        // Фільтри
+        $('#period-filter').change(function() {
+            currentPeriod = $(this).val();
+            loadProgressRecords();
+            updateChart();
+        });
+
+        // Тип відображення
+        $('input[name="view-type"]').change(function() {
+            currentViewType = $(this).val();
+            toggleViewType();
+        });
+
+        // Тип графіка
+        $('input[name="chart-type"]').change(function() {
+            updateChart();
+        });
+
+        // Модальні вікна
+        $('#add-progress-btn').click(() => $('#addProgressModal').modal('show'));
+        $('#add-goal-btn').click(() => $('#addGoalModal').modal('show'));
+
+        // Форми
+        $('#add-progress-form').submit(handleAddProgress);
+        $('#add-goal-form').submit(handleAddGoal);
+        $('#edit-goal-form').submit(handleEditGoal);
+
+        // Зміна категорії прогресу
+        $('#progress-category').change(function() {
+            loadMetricsForCategory($(this).val());
+        });
+
+        // Слайдер рейтингу
+        $('#progress-rating').on('input', function() {
+            $('#rating-value').text($(this).val());
+        });
+
+        // Генерація звіту
+        $('#generate-report-btn').click(generateReport);
+    }
+
+    // Завантаження загальної статистики
+    function loadOverallStats() {
+        apiRequest('/api/progress/statistics/')
+            .then(stats => {
+                updateOverallProgress(stats.overall_progress || 0);
+                $('#completed-sessions').text(stats.completed_sessions || 0);
+                $('#sessions-change').text(`+${stats.sessions_change || 0} цього тижня`);
+                $('#improvement-score').text(stats.improvement_score || 0);
+                $('#score-change').text(`+${stats.score_change || 0} за місяць`);
+                $('#goals-achieved').text(stats.goals_achieved || 0);
+                $('#goals-total').text(`з ${stats.total_goals || 0} загалом`);
+
+                // Оновлення лічильників категорій
+                updateCategoryCounts(stats.category_counts || {});
+            })
+            .catch(error => {
+                console.error('Error loading statistics:', error);
+            });
+    }
+
+    // Оновлення кільцевого прогресу
+    function updateOverallProgress(percentage) {
+        const circle = document.getElementById('overall-progress-ring');
+        const circumference = 2 * Math.PI * 30; // r = 30
+        const offset = circumference - (percentage / 100) * circumference;
+
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = offset;
+
+        $('#overall-progress-text').text(`${Math.round(percentage)}%`);
+
+        // Зміна кольору залежно від прогресу
+        if (percentage < 30) {
+            circle.style.stroke = '#dc3545';
+        } else if (percentage < 70) {
+            circle.style.stroke = '#ffc107';
+        } else {
+            circle.style.stroke = '#28a745';
+        }
+    }
+
+    // Оновлення лічильників категорій
+    function updateCategoryCounts(counts) {
+        Object.keys(counts).forEach(category => {
+            $(`#${category}-count`).text(counts[category]);
+        });
+    }
+
+    // Завантаження записів прогресу
+    function loadProgressRecords() {
+        const params = new URLSearchParams({
+            category: currentCategory === 'all' ? '' : currentCategory,
+            period: currentPeriod,
+            limit: currentViewType === 'list' ? 50 : 10
+        });
+
+        apiRequest(`/api/progress/records/?${params}`)
+            .then(records => {
+                displayProgressRecords(records);
+                if (currentViewType === 'chart') {
+                    updateChart(records);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading progress records:', error);
+                $('#progress-records').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>Помилка завантаження</h5>
+                        <p>Не вдалося завантажити записи прогресу</p>
+                    </div>
+                `);
+            });
+    }
+
+    // Відображення записів прогресу
+    function displayProgressRecords(records) {
+        if (records.length === 0) {
+            $('#progress-records').html(`
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h5>Записи не знайдені</h5>
+                    <p>Додайте свій перший запис прогресу</p>
+                    <button class="btn btn-primary" onclick="$('#addProgressModal').modal('show')">
+                        Додати запис
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        records.forEach((record, index) => {
+            html += generateProgressRecordCard(record, index > 0 ? records[index - 1] : null);
+        });
+
+        $('#progress-records').html(html);
+    }
+
+    // Генерація картки запису прогресу
+    function generateProgressRecordCard(record, previousRecord) {
+        const trendClass = getTrendClass(record, previousRecord);
+        const trendIcon = getTrendIcon(record, previousRecord);
+        const categoryClass = `category-${record.category}`;
+        const moodEmoji = getMoodEmoji(record.mood);
+
+        return `
+            <div class="progress-record ${trendClass}" onclick="viewProgressDetails(${record.id})">
+                <div class="d-flex align-items-center">
+                    <div class="category-icon ${categoryClass}">
+                        <i class="${getCategoryIcon(record.category)}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">${getCategoryText(record.category)}</h6>
+                                <p class="text-muted mb-1">${record.metric_name}</p>
+                                <small class="text-muted">${formatDate(record.date)}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="h5 mb-1">
+                                    ${record.value} ${record.unit}
+                                    <i class="${trendIcon.icon} ${trendIcon.class} ms-1"></i>
+                                </div>
+                                <div class="rating-display">
+                                    <small class="text-muted">Оцінка:</small>
+                                    <div class="rating-bar">
+                                        <div class="rating-fill rating-${record.rating}" style="width: ${record.rating * 10}%"></div>
+                                    </div>
+                                    <small class="text-muted">${record.rating}/10</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                ${record.notes ? `
+                                    <small class="text-muted">
+                                        <i class="fas fa-sticky-note me-1"></i>
+                                        ${record.notes.substring(0, 50)}${record.notes.length > 50 ? '...' : ''}
+                                    </small>
+                                ` : ''}
+                            </div>
+                            <div class="d-flex align-items-center">
+                                ${record.mood ? `<span class="mood-emoji me-2">${moodEmoji}</span>` : ''}
+                                ${record.shared_with_doctor ? '<i class="fas fa-share-alt text-primary" title="Поділено з лікарем"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Перегляд деталей запису
+    function viewProgressDetails(recordId) {
+        selectedProgressId = recordId;
+
+        apiRequest(`/api/progress/records/${recordId}/`)
+            .then(record => {
+                displayProgressDetails(record);
+                $('#progressDetailsModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading progress details:', error);
+                showErrorMessage('Помилка завантаження деталей запису');
+            });
+    }
+
+    // Відображення деталей в модальному вікні
+    function displayProgressDetails(record) {
+        $('#detail-category').text(getCategoryText(record.category));
+        $('#detail-date').text(formatDate(record.date));
+        $('#detail-metric').text(record.metric_name);
+        $('#detail-value').text(`${record.value} ${record.unit}`);
+        $('#detail-rating').text(`${record.rating}/10`);
+        $('#detail-mood').html(getMoodEmoji(record.mood));
+        $('#detail-notes').text(record.notes || 'Примітки відсутні');
+
+        // Тренд
+        const trend = calculateTrend(record);
+        $('#detail-trend').html(`
+            <span class="trend-${trend.direction}">
+                <i class="fas fa-arrow-${trend.direction === 'up' ? 'up' : trend.direction === 'down' ? 'down' : 'right'}"></i>
+                ${trend.text}
+            </span>
+        `);
+    }
+
+    // Обробка додавання запису прогресу
+    function handleAddProgress(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const progressData = {
+            category: formData.get('category'),
+            metric: formData.get('metric'),
+            value: formData.get('value'),
+            date: formData.get('date'),
+            rating: formData.get('rating'),
+            mood: formData.get('mood'),
+            notes: formData.get('notes'),
+            share_with_doctor: formData.get('share_with_doctor') === 'on'
+        };
+
+        apiRequest('/api/progress/records/', 'POST', progressData)
+            .then(response => {
+                $('#addProgressModal').modal('hide');
+                $('#add-progress-form')[0].reset();
+                showSuccessMessage('Запис прогресу додано!');
+                loadOverallStats();
+                loadProgressRecords();
+            })
+            .catch(error => {
+                console.error('Error adding progress:', error);
+                showErrorMessage('Помилка при додаванні запису');
+            });
+    }
+
+    // Завантаження метрик для категорії
+    function loadMetricsForCategory(category) {
+        if (!category) {
+            $('#progress-metric').html('<option value="">Спочатку оберіть категорію</option>');
+            return;
+        }
+
+        apiRequest(`/api/progress/metrics/?category=${category}`)
+            .then(metrics => {
+                let optionsHtml = '<option value="">Оберіть показник</option>';
+                metrics.forEach(metric => {
+                    optionsHtml += `<option value="${metric.id}" data-unit="${metric.unit}">${metric.name}</option>`;
+                });
+                $('#progress-metric').html(optionsHtml);
+            })
+            .catch(error => {
+                console.error('Error loading metrics:', error);
+                $('#progress-metric').html('<option value="">Помилка завантаження</option>');
+            });
+
+        // Зміна одиниці вимірювання
+        $('#progress-metric').change(function() {
+            const selectedOption = $(this).find('option:selected');
+            const unit = selectedOption.data('unit') || 'од.';
+            $('#progress-unit').text(unit);
+        });
+    }
+
+    // Оновлення графіка
+    function updateChart(data = null) {
+        if (currentViewType !== 'chart') return;
+
+        const ctx = document.getElementById('progress-chart').getContext('2d');
+
+        if (progressChart) {
+            progressChart.destroy();
+        }
+
+        const chartType = $('input[name="chart-type"]:checked').val() === 'bar-chart' ? 'bar' : 'line';
+
+        // Якщо дані не передані, завантажуємо їх
+        if (!data) {
+            const params = new URLSearchParams({
+                category: currentCategory === 'all' ? '' : currentCategory,
+                period: currentPeriod,
+                chart_data: true
+            });
+
+            apiRequest(`/api/progress/chart/?${params}`)
+                .then(chartData => {
+                    createChart(ctx, chartType, chartData);
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                });
+        } else {
+            const chartData = prepareChartData(data);
+            createChart(ctx, chartType, chartData);
+        }
+    }
+
+    // Створення графіка
+    function createChart(ctx, type, data) {
+        progressChart = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: data.labels,
+                datasets: data.datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Значення'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Період'
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+
+    // Підготовка даних для графіка
+    function prepareChartData(records) {
+        const labels = [];
+        const data = [];
+        const colors = {
+            mobility: '#667eea',
+            strength: '#f5576c',
+            flexibility: '#00f2fe',
+            balance: '#38f9d7',
+            pain: '#fee140',
+            cognitive: '#fed6e3',
+            speech: '#fcb69f'
+        };
+
+        records.forEach(record => {
+            labels.push(formatDate(record.date));
+            data.push(record.value);
+        });
+
+        return {
+            labels: labels,
+            datasets: [{
+                label: currentCategory === 'all' ? 'Загальний прогрес' : getCategoryText(currentCategory),
+                data: data,
+                borderColor: colors[currentCategory] || '#007bff',
+                backgroundColor: colors[currentCategory] ? colors[currentCategory] + '20' : '#007bff20',
+                tension: 0.4,
+                fill: true
+            }]
+        };
+    }
+
+    // Перемикання типу відображення
+    function toggleViewType() {
+        $('#progress-chart-card, #progress-list-card, #progress-calendar-card').hide();
+
+        switch(currentViewType) {
+            case 'chart':
+                $('#progress-chart-card').show();
+                updateChart();
+                break;
+            case 'list':
+                $('#progress-list-card').show();
+                loadProgressRecords();
+                break;
+            case 'calendar':
+                $('#progress-calendar-card').show();
+                loadProgressCalendar();
+                break;
+        }
+    }
+
+    // Завантаження календаря прогресу
+    function loadProgressCalendar() {
+        apiRequest(`/api/progress/calendar/?period=${currentPeriod}`)
+            .then(calendarData => {
+                generateProgressCalendar(calendarData);
+            })
+            .catch(error => {
+                console.error('Error loading calendar:', error);
+                $('#progress-calendar').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-times"></i>
+                        <h5>Помилка завантаження календаря</h5>
+                    </div>
+                `);
+            });
+    }
+
+    // Генерація календаря прогресу
+    function generateProgressCalendar(data) {
+        // Тут буде логіка генерації календаря
+        let calendarHtml = '<div class="text-center text-muted py-4">Календар в розробці</div>';
+        $('#progress-calendar').html(calendarHtml);
+    }
+
+    // Завантаження цілей
+    function loadGoals() {
+        apiRequest('/api/progress/goals/')
+            .then(goals => {
+                displayGoals(goals);
+            })
+            .catch(error => {
+                console.error('Error loading goals:', error);
+                $('#current-goals').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-bullseye"></i>
+                        <h6>Помилка завантаження цілей</h6>
+                    </div>
+                `);
+            });
+    }
+
+    // Відображення цілей
+    function displayGoals(goals) {
+        if (goals.length === 0) {
+            $('#current-goals').html(`
+                <div class="empty-state">
+                    <i class="fas fa-bullseye"></i>
+                    <h6>Немає активних цілей</h6>
+                    <p class="small">Додайте свою першу ціль</p>
+                    <button class="btn btn-sm btn-primary" onclick="$('#addGoalModal').modal('show')">
+                        Додати ціль
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        goals.forEach(goal => {
+            html += generateGoalCard(goal);
+        });
+
+        $('#current-goals').html(html);
+    }
+
+    // Генерація картки цілі
+    function generateGoalCard(goal) {
+        const progress = (goal.current_value / goal.target_value) * 100;
+        const priorityClass = `priority-${goal.priority}`;
+        const daysLeft = Math.ceil((new Date(goal.target_date) - new Date()) / (1000 * 60 * 60 * 24));
+
+        return `
+            <div class="goal-card ${priorityClass}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-1">${goal.title}</h6>
+                    <span class="badge bg-${goal.priority === 'high' ? 'danger' : goal.priority === 'medium' ? 'warning' : 'success'}">
+                        ${goal.priority === 'high' ? 'Високий' : goal.priority === 'medium' ? 'Середній' : 'Низький'}
+                    </span>
+                </div>
+
+                ${goal.description ? `<p class="text-muted small mb-2">${goal.description}</p>` : ''}
+
+                <div class="goal-progress mb-2">
+                    <div class="goal-progress-bar bg-primary" style="width: ${Math.min(progress, 100)}%"></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        ${goal.current_value} / ${goal.target_value} ${goal.unit || ''}
+                    </small>
+                    <small class="text-muted">
+                        ${daysLeft > 0 ? `${daysLeft} днів залишилось` : 'Прострочено'}
+                    </small>
+                </div>
+
+                <div class="mt-2">
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button class="btn btn-outline-primary" onclick="updateGoal(${goal.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-success" onclick="addGoalProgress(${goal.id})">
+                            <i class="fas fa-plus"></i> Прогрес
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteGoal(${goal.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Обробка додавання цілі
+    function handleAddGoal(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const goalData = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            category: formData.get('category'),
+            target_date: formData.get('target_date'),
+            current_value: formData.get('current_value'),
+            target_value: formData.get('target_value'),
+            priority: formData.get('priority')
+        };
+
+        apiRequest('/api/progress/goals/', 'POST', goalData)
+            .then(response => {
+                $('#addGoalModal').modal('hide');
+                $('#add-goal-form')[0].reset();
+                showSuccessMessage('Ціль створена!');
+                loadGoals();
+                loadOverallStats();
+            })
+            .catch(error => {
+                console.error('Error adding goal:', error);
+                showErrorMessage('Помилка при створенні цілі');
+            });
+    }
+
+    function handleEditGoal(e) {
+        e.preventDefault();
+
+        const goalId = $('#edit-goal-id').val();
+        const formData = new FormData(e.target);
+        const goalData = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            category: formData.get('category'),
+            target_date: formData.get('target_date'),
+            current_value: formData.get('current_value'),
+            target_value: formData.get('target_value'),
+            priority: formData.get('priority')
+        };
+
+        apiRequest(`/api/progress/goals/${goalId}/`, 'PUT', goalData)
+            .then(response => {
+                $('#editGoalModal').modal('hide');
+                showSuccessMessage('Ціль оновлена!');
+                loadGoals();
+                loadOverallStats();
+            })
+            .catch(error => {
+                console.error('Error updating goal:', error);
+                showErrorMessage('Помилка при оновленні цілі');
+            });
+    }
+
+    // Завантаження досягнень
+    function loadAchievements() {
+        apiRequest('/api/progress/achievements/')
+            .then(achievements => {
+                displayAchievements(achievements);
+            })
+            .catch(error => {
+                console.error('Error loading achievements:', error);
+                $('#achievements').html(`
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <h6>Помилка завантаження досягнень</h6>
+                    </div>
+                `);
+            });
+    }
+
+    // Відображення досягнень
+    function displayAchievements(achievements) {
+        if (achievements.length === 0) {
+            $('#achievements').html(`
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <h6>Поки немає досягнень</h6>
+                    <p class="small">Продовжуйте працювати над своїм прогресом!</p>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        achievements.forEach(achievement => {
+            html += `
+                <div class="achievement-badge" title="${achievement.description}">
+                    <i class="fas fa-${achievement.icon} me-1"></i>
+                    ${achievement.title}
+                </div>
+            `;
+        });
+
+        $('#achievements').html(html);
+    }
+
+    // Генерація звіту
+    function generateReport() {
+        showInfoMessage('Генерація звіту...');
+
+        const params = new URLSearchParams({
+            category: currentCategory === 'all' ? '' : currentCategory,
+            period: currentPeriod,
+            format: 'pdf'
+        });
+
+        window.open(`/api/progress/report/?${params}`, '_blank');
+    }
+
+    // Допоміжні функції
+    function getTrendClass(record, previousRecord) {
+        if (!previousRecord) return 'stable';
+
+        const diff = record.value - previousRecord.value;
+        if (Math.abs(diff) < 0.1) return 'stable';
+        return diff > 0 ? 'improved' : 'declined';
+    }
+
+    function getTrendIcon(record, previousRecord) {
+        const trendClass = getTrendClass(record, previousRecord);
+
+        switch(trendClass) {
+            case 'improved':
+                return { icon: 'fas fa-arrow-up', class: 'trend-up' };
+            case 'declined':
+                return { icon: 'fas fa-arrow-down', class: 'trend-down' };
+            default:
+                return { icon: 'fas fa-minus', class: 'trend-stable' };
+        }
+    }
+
+    function getMoodEmoji(mood) {
+        const moods = {
+            1: '😞',
+            2: '😐',
+            3: '🙂',
+            4: '😊',
+            5: '😄'
+        };
+        return moods[mood] || '😐';
+    }
+
+    function getCategoryIcon(category) {
+        const icons = {
+            mobility: 'fas fa-walking',
+            strength: 'fas fa-dumbbell',
+            flexibility: 'fas fa-expand-arrows-alt',
+            balance: 'fas fa-balance-scale',
+            pain: 'fas fa-heart-broken',
+            cognitive: 'fas fa-brain',
+            speech: 'fas fa-comments'
+        };
+        return icons[category] || 'fas fa-chart-line';
+    }
+
+    function getCategoryText(category) {
+        const categories = {
+            mobility: 'Мобільність',
+            strength: 'Сила',
+            flexibility: 'Гнучкість',
+            balance: 'Рівновага',
+            pain: 'Біль',
+            cognitive: 'Когнітивні функції',
+            speech: 'Мовлення'
+        };
+        return categories[category] || 'Інше';
+    }
+
+    function calculateTrend(record) {
+        // Логіка розрахунку тренду
+        return {
+            direction: 'up',
+            text: 'Покращення'
+        };
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('uk-UA', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+
+    // Додаткові функції для цілей
+    function updateGoal(goalId) {
+        // Load goal data and populate edit form
+        apiRequest(`/api/progress/goals/${goalId}/`)
+            .then(goal => {
+                $('#edit-goal-id').val(goal.id);
+                $('#edit-goal-title').val(goal.title);
+                $('#edit-goal-description').val(goal.description);
+                $('#edit-goal-category').val(goal.category);
+                $('#edit-goal-target-date').val(goal.target_date);
+                $('#edit-goal-current-value').val(goal.current_value);
+                $('#edit-goal-target-value').val(goal.target_value);
+                $('#edit-goal-priority').val(goal.priority);
+                
+                $('#editGoalModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading goal:', error);
+                showErrorMessage('Помилка завантаження даних цілі');
+            });
+    }
+
+    function addGoalProgress(goalId) {
+        // Set the goal ID and show the add progress modal
+        $('#progress-goal-id').val(goalId);
+        
+        // Load goal details to show in the modal
+        apiRequest(`/api/progress/goals/${goalId}/`)
+            .then(goal => {
+                // You can add goal info display here if needed
+                $('#addProgressModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading goal:', error);
+                showErrorMessage('Помилка завантаження даних цілі');
+            });
+    }
+
+    function deleteGoal(goalId) {
+        if (confirm('Ви впевнені, що хочете видалити цю ціль?')) {
+            apiRequest(`/api/progress/goals/${goalId}/`, 'DELETE')
+                .then(() => {
+                    showSuccessMessage('Ціль видалено');
+                    loadGoals();
+                    loadOverallStats();
+                })
+                .catch(error => {
+                    console.error('Error deleting goal:', error);
+                    showErrorMessage('Помилка при видаленні цілі');
+                });
+        }
+    }
+
+    // Функції повідомлень
+    function showSuccessMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-success border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        $('body').append(toast);
+        toast.toast('show');
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function showErrorMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-danger border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        $('body').append(toast);
+        toast.toast('show');
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function showInfoMessage(message) {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-info border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+
+        $('body').append(toast);
+        toast.toast('show');
+        setTimeout(() => toast.remove(), 5000);
+    }
+</script>
+{% endblock %}

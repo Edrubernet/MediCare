@@ -1,0 +1,108 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Редагувати пацієнта{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Редагувати інформацію пацієнта</h4>
+            <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Особиста інформація</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_first_name" class="form-label">Ім'я *</label>
+                            <input type="text" class="form-control" id="id_first_name" 
+                                   name="first_name" value="{{ patient.user.first_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_last_name" class="form-label">Прізвище *</label>
+                            <input type="text" class="form-control" id="id_last_name" 
+                                   name="last_name" value="{{ patient.user.last_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="id_email" 
+                                   name="email" value="{{ patient.user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_date_of_birth" class="form-label">Дата народження</label>
+                            <input type="date" class="form-control" id="id_date_of_birth" 
+                                   name="date_of_birth" value="{{ patient.date_of_birth|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_gender" class="form-label">Стать</label>
+                            <select class="form-select" id="id_gender" name="gender">
+                                <option value="">Не вказано</option>
+                                <option value="M" {% if patient.gender == 'M' %}selected{% endif %}>Чоловік</option>
+                                <option value="F" {% if patient.gender == 'F' %}selected{% endif %}>Жінка</option>
+                                <option value="O" {% if patient.gender == 'O' %}selected{% endif %}>Інше</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5>Контактна інформація</h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_address" class="form-label">Адреса</label>
+                            <textarea class="form-control" id="id_address" name="address" 
+                                      rows="3">{{ patient.address }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_emergency_contact_name" class="form-label">Ім'я екстреного контакту</label>
+                            <input type="text" class="form-control" id="id_emergency_contact_name" 
+                                   name="emergency_contact_name" value="{{ patient.emergency_contact_name }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_emergency_contact_phone" class="form-label">Телефон екстреного контакту</label>
+                            <input type="tel" class="form-control" id="id_emergency_contact_phone" 
+                                   name="emergency_contact_phone" value="{{ patient.emergency_contact_phone }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_assigned_doctors" class="form-label">Призначені лікарі</label>
+                            <select class="form-select" id="id_assigned_doctors" name="assigned_doctors" multiple>
+                                {% for doctor in available_doctors %}
+                                    <option value="{{ doctor.id }}" 
+                                            {% if doctor in patient.assigned_doctors.all %}selected{% endif %}>
+                                        {{ doctor.user.get_full_name }} - {{ doctor.specialization|default:"Без спеціалізації" }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Утримуйте Ctrl для вибору кількох лікарів</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">
+                        Скасувати
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Зберегти зміни
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

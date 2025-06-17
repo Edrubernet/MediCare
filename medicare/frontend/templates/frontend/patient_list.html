@@ -1,0 +1,39 @@
+    // --- Add Patient Logic ---
+    const handleSearchPatients = async () => {
+        const query = patientSearchInput.value;
+        if (query.length < 2) {
+            patientsSearchResults.innerHTML = '<p class="text-muted">Введіть мінімум 2 символи для пошуку.</p>';
+            searchResultsContainer.classList.remove('d-none');
+            return;
+        }
+        
+        try {
+            patientsSearchResults.innerHTML = '<p class="text-muted">Пошук...</p>';
+            searchResultsContainer.classList.remove('d-none');
+            
+            const response = await fetch(`/api/patients/search/?q=${encodeURIComponent(query)}`);
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Помилка пошуку');
+            }
+            const patients = await response.json();
+            
+            patientsSearchResults.innerHTML = '';
+            
+            if(patients.length > 0) {
+                patients.forEach(patient => {
+                    const resultItem = 
+                        '<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                            patient.full_name + ' (' + patient.email + ')' +
+                            '<button class="btn btn-sm btn-success" onclick="assignPatient(' + patient.profile_id + ')">Призначити</button>' +
+                        '</div>';
+                    patientsSearchResults.insertAdjacentHTML('beforeend', resultItem);
+                });
+            } else {
+                patientsSearchResults.innerHTML = '<p class="text-muted">Пацієнтів не знайдено.</p>';
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
+            patientsSearchResults.innerHTML = '<p class="text-danger">Помилка під час пошуку: ' + error.message + '</p>';
+        }
+    }; 

@@ -1,0 +1,236 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Завершити сесію вправ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Завершити сесію вправ</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'progress:progress_dashboard' %}">Прогрес</a></li>
+                    <li class="breadcrumb-item active">Завершити сесію</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Інформація про сесію -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-info me-2"></i>
+                        Інформація про сесію
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Програма:</strong> 
+                                {% if object.program %}
+                                    {{ object.program.title }}
+                                {% else %}
+                                    Не вказано
+                                {% endif %}
+                            </p>
+                            <p class="mb-2">
+                                <strong>Дата:</strong> {{ object.date|date:"d.m.Y" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Статус:</strong> 
+                                {% if object.completed %}
+                                    <span class="badge bg-success">Завершено</span>
+                                {% else %}
+                                    <span class="badge bg-warning">В процесі</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-2">
+                                <strong>Створено:</strong> {{ object.date|date:"d.m.Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if object.notes %}
+                        <hr>
+                        <div>
+                            <strong>Попередні нотатки:</strong>
+                            <p class="mt-2 text-muted">{{ object.notes|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Форма завершення -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Завершити сесію
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.completed }}
+                                <label class="form-check-label" for="{{ form.completed.id_for_label }}">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <strong>Позначити сесію як завершену</strong>
+                                </label>
+                            </div>
+                            {% if form.completed.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.completed.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Увімкніть цей перемикач, якщо ви повністю завершили всі заплановані вправи.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Підсумкові нотатки
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Опишіть як пройшла сесія, які вправи виконували, рівень складності, болючі відчуття тощо.
+                            </div>
+                        </div>
+
+                        <!-- Рекомендації -->
+                        <div class="alert alert-success">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            <strong>Поради для записів:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Відзначте рівень болю (1-10)</li>
+                                <li>Запишіть кількість повторень/підходів</li>
+                                <li>Відзначте складність вправ</li>
+                                <li>Опишіть загальне самочуття</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'progress:progress_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Назад до дашборду
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i>
+                                Зберегти та завершити
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Статистика сесії -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up text-primary me-2"></i>
+                        Статистика виконання
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="h4 text-primary mb-0">
+                                {% if object.program %}
+                                    {{ object.program.exercises.count|default:0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Вправ в програмі</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-success mb-0">{{ object.completions.count|default:0 }}</div>
+                            <small class="text-muted">Виконано</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-info mb-0">
+                                {% if object.date %}
+                                    {{ object.date|timesince }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Тому</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-warning mb-0">
+                                {% if object.completed %}
+                                    100%
+                                {% else %}
+                                    {% widthratio object.completions.count object.program.exercises.count 100 %}%
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Прогрес</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation classes
+    const form = document.querySelector('form');
+    const formControls = form.querySelectorAll('textarea, input[type="text"]');
+    
+    formControls.forEach(control => {
+        if (control.tagName === 'TEXTAREA') {
+            control.classList.add('form-control');
+            control.rows = 6;
+            control.placeholder = 'Опишіть детально як пройшла сесія:\n\n• Які вправи виконували?\n• Який був рівень болю (1-10)?\n• Наскільки складними були вправи?\n• Як почувалися під час тренування?\n• Чи були якісь труднощі?\n• Загальні враження...';
+        }
+    });
+    
+    // Auto-check completed if form is being submitted
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const completedCheckbox = form.querySelector('input[type="checkbox"]');
+    
+    if (submitBtn && completedCheckbox) {
+        submitBtn.addEventListener('click', function(e) {
+            if (confirm('Ви дійсно хочете завершити цю сесію?')) {
+                // Auto-check completed checkbox
+                if (!completedCheckbox.checked) {
+                    completedCheckbox.checked = true;
+                }
+            } else {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Focus on notes field
+    const notesField = form.querySelector('textarea');
+    if (notesField) {
+        notesField.focus();
+    }
+});
+</script>
+{% endblock %}

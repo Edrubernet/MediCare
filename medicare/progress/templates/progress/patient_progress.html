@@ -1,0 +1,170 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Прогрес пацієнта - {{ patient.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Прогрес пацієнта</h1>
+            <div class="d-flex align-items-center">
+                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 48px; height: 48px;">
+                    <span class="text-white fw-bold">
+                        {{ patient.user.first_name|first }}{{ patient.user.last_name|first }}
+                    </span>
+                </div>
+                <div>
+                    <h5 class="mb-0">{{ patient.user.get_full_name }}</h5>
+                    <p class="text-muted mb-0">{{ patient.user.email }}</p>
+                </div>
+            </div>
+        </div>
+        <div>
+            {% if request.user.user_type == 'doctor' %}
+                <a href="{% url 'progress:create_note' %}?patient_id={{ patient.id }}" class="btn btn-primary">
+                    <i class="bi bi-journal-plus"></i> Додати нотатку
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Exercise Sessions -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity text-success me-2"></i>
+                        Сеанси тренувань
+                    </h5>
+                    <span class="badge bg-primary">{{ sessions.count }} сеансів</span>
+                </div>
+                <div class="card-body">
+                    {% if sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Програма</th>
+                                        <th>Дата</th>
+                                        <th>Статус</th>
+                                        <th>Нотатки</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in sessions %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <div class="fw-bold">{{ session.program.title }}</div>
+                                                    <small class="text-muted">{{ session.program.description|truncatewords:8 }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <div>{{ session.date|date:"d.m.Y" }}</div>
+                                                    <small class="text-muted">{{ session.date|time:"H:i" }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if session.completed %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if session.completed %}Завершено{% else %}В процесі{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if session.notes %}
+                                                    <span class="text-muted">{{ session.notes|truncatewords:5 }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="text-muted mt-3">Ще немає записаних сеансів</h6>
+                            <p class="text-muted">Сеанси з'являться тут після початку виконання програм</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Patient Notes -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-text text-info me-2"></i>
+                        Нотатки лікаря
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if notes %}
+                        {% for note in notes %}
+                            <div class="border-start border-info ps-3 mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1">Лікар {{ note.doctor.user.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-date me-1"></i>
+                                            {{ note.created_at|date:"d.m.Y H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">{{ note.note }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-journal text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">Ще немає нотаток</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="col-lg-4">
+
+            <!-- Progress Statistics -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart text-success me-2"></i>
+                        Статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 text-primary mb-1">{{ sessions.count }}</div>
+                                <small class="text-muted">Всього сеансів</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 text-success mb-1">{{ sessions|length|default:0 }}</div>
+                                <small class="text-muted">Завершених</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-center">
+                                <div class="h4 text-info mb-1">{{ notes.count }}</div>
+                                <small class="text-muted">Нотаток лікаря</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

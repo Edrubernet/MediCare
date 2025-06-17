@@ -1,0 +1,601 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block title %}{{ program.title }} - Програми реабілітації{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% csrf_token %}
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">{{ program.title }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'programs:program_list' %}">Програми</a></li>
+                    <li class="breadcrumb-item active">{{ program.title }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <span class="badge fs-6 
+                {% if program.status == 'active' %}bg-success
+                {% elif program.status == 'completed' %}bg-primary
+                {% elif program.status == 'paused' %}bg-warning
+                {% elif program.status == 'cancelled' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ program.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Program Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        Інформація про програму
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Пацієнт:</strong></p>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ program.patient.user.first_name|first }}{{ program.patient.user.last_name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ program.patient.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ program.patient.user.email }}</small>
+                                </div>
+                            </div>
+                            
+                            <p><strong>Лікар:</strong></p>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <span class="text-white fw-bold">
+                                        {{ program.doctor.user.first_name|first }}{{ program.doctor.user.last_name|first }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ program.doctor.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ program.doctor.specialization|default:"Лікар" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <p><strong>Період:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                {{ program.start_date|date:"d.m.Y" }} - 
+                                {% if program.end_date %}
+                                    {{ program.end_date|date:"d.m.Y" }}
+                                {% else %}
+                                    Не обмежено
+                                {% endif %}
+                            </p>
+                            
+                            <p><strong>Частота занять:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ program.sessions_per_week }} раз/тиждень, {{ program.session_duration }} хв
+                            </p>
+                            
+                            <p><strong>Створено:</strong></p>
+                            <p class="text-muted">
+                                <i class="bi bi-calendar-plus me-1"></i>
+                                {{ program.created_at|date:"d.m.Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if program.description %}
+                        <hr>
+                        <h6>Опис програми:</h6>
+                        <p class="text-muted">{{ program.description }}</p>
+                    {% endif %}
+                    
+                    {% if program.goals %}
+                        <hr>
+                        <h6>Цілі програми:</h6>
+                        <p class="text-muted">{{ program.goals }}</p>
+                    {% endif %}
+                    
+                    {% if program.expected_outcomes %}
+                        <hr>
+                        <h6>Очікувані результати:</h6>
+                        <p class="text-muted">{{ program.expected_outcomes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Program Days -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar3 text-info me-2"></i>
+                        План тренувань
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if program.program_days.exists %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">План тренувань</h6>
+                            {% if perms.programs.can_modify_program or user == program.doctor.user %}
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addDayModal">
+                                    <i class="bi bi-plus"></i> Додати день
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="accordion" id="programDaysAccordion">
+                            {% for day in program.program_days.all %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ day.id }}">
+                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                                type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ day.id }}" 
+                                                aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                                aria-controls="collapse{{ day.id }}">
+                                            <div class="d-flex justify-content-between w-100 me-3">
+                                                <span>
+                                                    <strong>День {{ day.day_number }}</strong>
+                                                    {% if day.title %} - {{ day.title }}{% endif %}
+                                                </span>
+                                                <small class="text-muted">
+                                                    {{ day.exercises.count }} вправ
+                                                </small>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ day.id }}" 
+                                         class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                         aria-labelledby="heading{{ day.id }}" 
+                                         data-bs-parent="#programDaysAccordion">
+                                        <div class="accordion-body">
+                                            {% if day.notes %}
+                                                <p class="text-muted mb-3">{{ day.notes }}</p>
+                                            {% endif %}
+                                            
+                                            {% if day.exercises.exists %}
+                                                <div class="list-group list-group-flush">
+                                                    {% for program_exercise in day.exercises.all %}
+                                                        <div class="list-group-item px-0">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="mb-1">{{ program_exercise.exercise.title }}</h6>
+                                                                    <p class="mb-1 text-muted small">
+                                                                        {{ program_exercise.exercise.description|truncatechars:100 }}
+                                                                    </p>
+                                                                    {% if program_exercise.additional_instructions %}
+                                                                        <p class="mb-1 text-info small">
+                                                                            <em>{{ program_exercise.additional_instructions }}</em>
+                                                                        </p>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="text-end">
+                                                                    <span class="badge bg-primary">
+                                                                        {{ program_exercise.sets }}x{{ program_exercise.repetitions }}
+                                                                    </span>
+                                                                    {% if program_exercise.duration %}
+                                                                        <br><small class="text-muted">{{ program_exercise.duration }}с</small>
+                                                                    {% endif %}
+                                                                    {% if program_exercise.rest_between_sets %}
+                                                                        <br><small class="text-muted">Відпочинок: {{ program_exercise.rest_between_sets }}с</small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted text-center py-3">
+                                                    <i class="bi bi-inbox"></i>
+                                                    Вправи для цього дня ще не додані
+                                                </p>
+                                            {% endif %}
+                                            
+                                            {% if perms.programs.can_modify_program or user == program.doctor.user %}
+                                                <div class="text-center mt-3">
+                                                    <button class="btn btn-sm btn-outline-success" onclick="addExerciseToDay({{ day.id }})">
+                                                        <i class="bi bi-plus"></i> Додати вправу
+                                                    </button>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="text-muted mt-3">План тренувань ще не створений</h6>
+                            <p class="text-muted">Додайте дні та вправи до програми</p>
+                            {% if perms.programs.can_modify_program or user == program.doctor.user %}
+                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addDayModal">
+                                    <i class="bi bi-plus-circle"></i> Додати день тренування
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear text-warning me-2"></i>
+                        Дії
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if perms.programs.can_modify_program or user == program.doctor.user %}
+                            <a href="{% url 'programs:program_edit' program.id %}" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Редагувати програму
+                            </a>
+                            
+                            {% if program.status == 'draft' %}
+                                <button class="btn btn-success" onclick="changeStatus('{{ program.id }}', 'active')">
+                                    <i class="bi bi-play"></i> Активувати програму
+                                </button>
+                            {% elif program.status == 'active' %}
+                                <button class="btn btn-warning" onclick="changeStatus('{{ program.id }}', 'paused')">
+                                    <i class="bi bi-pause"></i> Призупинити програму
+                                </button>
+                                <button class="btn btn-primary" onclick="changeStatus('{{ program.id }}', 'completed')">
+                                    <i class="bi bi-check-circle"></i> Завершити програму
+                                </button>
+                            {% elif program.status == 'paused' %}
+                                <button class="btn btn-success" onclick="changeStatus('{{ program.id }}', 'active')">
+                                    <i class="bi bi-play"></i> Відновити програму
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <a href="{% url 'progress:program_progress' program.id %}" class="btn btn-info">
+                            <i class="bi bi-graph-up"></i> Переглянути прогрес
+                        </a>
+                        
+                        <a href="{% url 'programs:program_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Повернутися до списку
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart text-success me-2"></i>
+                        Статистика прогресу
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Загальний прогрес:</span>
+                            <span class="fw-bold">{{ program.progress_percentage }}%</span>
+                        </div>
+                        <div class="progress mt-1">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ program.progress_percentage }}%" 
+                                 aria-valuenow="{{ program.progress_percentage }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h6 class="text-primary mb-0">{{ program.program_days.count }}</h6>
+                                <small class="text-muted">Днів програми</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-success mb-0">
+                                {% with total_exercises=program.program_days.all|length %}
+                                    {% for day in program.program_days.all %}
+                                        {% if forloop.first %}{{ day.exercises.count }}{% endif %}
+                                    {% empty %}
+                                        0
+                                    {% endfor %}
+                                {% endwith %}
+                            </h6>
+                            <small class="text-muted">Загалом вправ</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeStatus(programId, newStatus) {
+    const statusMessages = {
+        'active': 'активувати',
+        'paused': 'призупинити', 
+        'completed': 'завершити',
+        'cancelled': 'скасувати'
+    };
+    
+    console.log('Changing status:', programId, newStatus); // Debug log
+    
+    if (confirm(`Ви впевнені, що хочете ${statusMessages[newStatus]} цю програму?`)) {
+        // Get CSRF token
+        let csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            // Try from meta tag
+            const metaToken = document.querySelector('meta[name="csrf-token"]');
+            if (metaToken) {
+                csrfToken = { value: metaToken.getAttribute('content') };
+            } else {
+                // Try alternative method - get from cookies
+                const name = 'csrftoken';
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = cookie.substring(name.length + 1);
+                            break;
+                        }
+                    }
+                }
+                if (!cookieValue) {
+                    console.error('CSRF token not found in input, meta tag, or cookies');
+                    alert('Помилка: CSRF токен не знайдений');
+                    return;
+                }
+                csrfToken = { value: cookieValue };
+            }
+        }
+        
+        console.log('Sending request to:', `/programs/${programId}/status/`); // Debug log
+        
+        fetch(`/programs/${programId}/status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken.value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => {
+            console.log('Response status:', response.status); // Debug log
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data); // Debug log
+            if (data.success) {
+                alert(data.message || 'Статус програми успішно змінено');
+                location.reload();
+            } else {
+                alert(data.message || 'Помилка при зміні статусу програми');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Помилка при зміні статусу програми: ${error.message}`);
+        });
+    }
+}
+
+// Анімація прогрес-бару
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const width = progressBar.style.width;
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.transition = 'width 1s ease-in-out';
+            progressBar.style.width = width;
+        }, 100);
+    }
+});
+</script>
+
+<!-- Модальне вікно для додавання дня тренування -->
+<div class="modal fade" id="addDayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати день тренування</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addDayForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="dayNumber" class="form-label">Номер дня</label>
+                        <input type="number" class="form-control" id="dayNumber" name="day_number" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dayDescription" class="form-label">Опис дня (необов'язково)</label>
+                        <textarea class="form-control" id="dayDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Додати день</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно для додавання вправи -->
+<div class="modal fade" id="addExerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати вправу до дня</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addExerciseForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" id="selectedDayId" name="day_id">
+                    
+                    <div class="mb-3">
+                        <label for="exerciseSelect" class="form-label">Вправа</label>
+                        <select class="form-select" id="exerciseSelect" name="exercise_id" required>
+                            <option value="">Оберіть вправу...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sets" class="form-label">Кількість сетів</label>
+                                <input type="number" class="form-control" id="sets" name="sets" min="1" value="3" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="repetitions" class="form-label">Повторення</label>
+                                <input type="number" class="form-control" id="repetitions" name="repetitions" min="1" value="10" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">Тривалість (секунди)</label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="restBetweenSets" class="form-label">Відпочинок між сетами (секунди)</label>
+                                <input type="number" class="form-control" id="restBetweenSets" name="rest_between_sets" min="0" value="60">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="additionalInstructions" class="form-label">Додаткові інструкції</label>
+                        <textarea class="form-control" id="additionalInstructions" name="additional_instructions" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Додати вправу</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Обробка форми додавання дня
+document.getElementById('addDayForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/programs/{{ program.id }}/add-day/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Помилка при додаванні дня: ' + (data.error || 'Невідома помилка'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка при додаванні дня');
+    });
+});
+
+// Функція для відкриття модального вікна додавання вправи
+function addExerciseToDay(dayId) {
+    document.getElementById('selectedDayId').value = dayId;
+    
+    // Завантажуємо список вправ
+    fetch('/exercises/api/exercises/')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.getElementById('exerciseSelect');
+        select.innerHTML = '<option value="">Оберіть вправу...</option>';
+        
+        data.results.forEach(exercise => {
+            const option = document.createElement('option');
+            option.value = exercise.id;
+            option.textContent = exercise.title;
+            select.appendChild(option);
+        });
+        
+        new bootstrap.Modal(document.getElementById('addExerciseModal')).show();
+    })
+    .catch(error => {
+        console.error('Error loading exercises:', error);
+        alert('Помилка при завантаженні вправ');
+    });
+}
+
+// Обробка форми додавання вправи
+document.getElementById('addExerciseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/programs/add-exercise/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Помилка при додаванні вправи: ' + (data.error || 'Невідома помилка'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка при додаванні вправи');
+    });
+});
+</script>
+
+{% endblock %}

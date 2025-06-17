@@ -1,0 +1,191 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Прогрес{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Прогрес</h1>
+            <p class="text-muted mb-0">Відстежуйте свій прогрес реабілітації</p>
+        </div>
+        <div>
+            {% if request.user.user_type == 'patient' %}
+                <a href="{% url 'progress:start_session' %}" class="btn btn-primary">
+                    <i class="bi bi-play"></i> Почати сеанс
+                </a>
+            {% elif request.user.user_type == 'doctor' %}
+                <a href="{% url 'progress:create_note' %}" class="btn btn-primary">
+                    <i class="bi bi-journal-plus"></i> Додати нотатку
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if request.user.user_type == 'patient' %}
+        <div class="row">
+            <!-- Recent Sessions -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-activity text-success me-2"></i>
+                            Останні сеанси
+                        </h5>
+                        <a href="{% url 'progress:progress_analytics' %}" class="btn btn-sm btn-outline-primary">
+                            Всі сеанси
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_sessions %}
+                            {% for session in recent_sessions %}
+                                <div class="d-flex justify-content-between align-items-center py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            {{ session.program.title }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-date me-1"></i>
+                                            {{ session.date|date:"d.m.Y" }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge {% if session.completed %}bg-success{% else %}bg-warning{% endif %}">
+                                            {% if session.completed %}Завершено{% else %}В процесі{% endif %}
+                                        </span>
+                                        {% if not session.completed %}
+                                            <div class="mt-1">
+                                                <a href="{% url 'progress:complete_session' session.id %}" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check"></i> Завершити
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
+                                <h6 class="text-muted mt-3">Ще немає записаних сеансів</h6>
+                                <p class="text-muted">Почніть свій перший сеанс тренування</p>
+                                <a href="{% url 'progress:start_session' %}" class="btn btn-primary">
+                                    <i class="bi bi-play"></i> Почати сеанс
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="col-lg-4">
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightning text-warning me-2"></i>
+                            Швидкі дії
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'progress:progress_analytics' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-bar-chart"></i> Аналітика
+                            </a>
+                            <a href="{% url 'progress:export_progress' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-download"></i> Експорт даних
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% elif request.user.user_type == 'doctor' %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people text-primary me-2"></i>
+                            Сеанси пацієнтів
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if patient_sessions %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Пацієнт</th>
+                                            <th>Програма</th>
+                                            <th>Дата</th>
+                                            <th>Статус</th>
+                                            <th>Дії</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for session in patient_sessions %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                             style="width: 32px; height: 32px;">
+                                                            <span class="text-white fw-bold small">
+                                                                {{ session.patient.user.first_name|first }}{{ session.patient.user.last_name|first }}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">{{ session.patient.user.get_full_name }}</div>
+                                                            <small class="text-muted">{{ session.patient.user.email }}</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{{ session.program.title }}</td>
+                                                <td>{{ session.date|date:"d.m.Y" }}</td>
+                                                <td>
+                                                    <span class="badge {% if session.completed %}bg-success{% else %}bg-warning{% endif %}">
+                                                        {% if session.completed %}Завершено{% else %}В процесі{% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'progress:patient_progress' session.patient.id %}" class="btn btn-sm btn-outline-primary">
+                                                        Переглянути
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                                <h6 class="text-muted mt-3">Немає активних сеансів пацієнтів</h6>
+                                <p class="text-muted">Сеанси з'являться тут, коли пацієнти почнуть виконувати програми</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Admin or other user types -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-gear text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Панель прогресу</h5>
+                        <p class="text-muted">Оберіть конкретного пацієнта для перегляду прогресу</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

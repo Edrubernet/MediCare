@@ -1,0 +1,1828 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Медичні записи - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Заголовок -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="h2 mb-3">Медичні записи</h1>
+            <p class="text-muted">Перегляд та управління вашими медичними документами</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <div class="btn-group me-2" role="group">
+                <button class="btn btn-outline-primary" id="refresh-btn">
+                    <i class="fas fa-sync-alt me-2"></i>Оновити
+                </button>
+                <button class="btn btn-outline-secondary" id="export-all-btn">
+                    <i class="fas fa-download me-2"></i>Експорт
+                </button>
+            </div>
+            <button class="btn btn-primary" id="upload-document-btn">
+                <i class="fas fa-plus me-2"></i>Завантажити документ
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Бічна панель -->
+        <div class="col-lg-3">
+            <!-- Швидка статистика -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Статистика
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Всього документів</span>
+                            <span class="badge bg-primary" id="total-documents">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Нові записи</span>
+                            <span class="badge bg-success" id="new-records">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Результати аналізів</span>
+                            <span class="badge bg-info" id="lab-results">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Рецепти</span>
+                            <span class="badge bg-warning" id="prescriptions">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Фільтри -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i>Фільтри
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Тип документа -->
+                    <div class="mb-3">
+                        <label class="form-label">Тип документа</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-diagnosis" checked>
+                            <label class="form-check-label" for="filter-diagnosis">
+                                <i class="fas fa-stethoscope me-2 text-primary"></i>Діагнози
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-treatment" checked>
+                            <label class="form-check-label" for="filter-treatment">
+                                <i class="fas fa-pills me-2 text-success"></i>Лікування
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-lab_result" checked>
+                            <label class="form-check-label" for="filter-lab_result">
+                                <i class="fas fa-vial me-2 text-info"></i>Аналізи
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-prescription" checked>
+                            <label class="form-check-label" for="filter-prescription">
+                                <i class="fas fa-prescription me-2 text-warning"></i>Рецепти
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-imaging" checked>
+                            <label class="form-check-label" for="filter-imaging">
+                                <i class="fas fa-x-ray me-2 text-danger"></i>Зображення
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filter-document" checked>
+                            <label class="form-check-label" for="filter-document">
+                                <i class="fas fa-file-alt me-2 text-secondary"></i>Документи
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Лікар -->
+                    <div class="mb-3">
+                        <label for="filter-doctor" class="form-label">Лікар</label>
+                        <select class="form-select" id="filter-doctor">
+                            <option value="">Всі лікарі</option>
+                            <!-- Буде заповнено динамічно -->
+                        </select>
+                    </div>
+
+                    <!-- Період -->
+                    <div class="mb-3">
+                        <label class="form-label">Період</label>
+                        <div class="btn-group w-100 mb-2" role="group">
+                            <input type="radio" class="btn-check" name="period" id="period-all" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="period-all">Весь час</label>
+                            <input type="radio" class="btn-check" name="period" id="period-month">
+                            <label class="btn btn-outline-primary btn-sm" for="period-month">Місяць</label>
+                            <input type="radio" class="btn-check" name="period" id="period-year">
+                            <label class="btn btn-outline-primary btn-sm" for="period-year">Рік</label>
+                        </div>
+                        <div class="custom-period" style="display: none;">
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="date" class="form-control form-control-sm" id="date-from">
+                                </div>
+                                <div class="col-6">
+                                    <input type="date" class="form-control form-control-sm" id="date-to">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-sm" id="apply-filters-btn">
+                            <i class="fas fa-search me-2"></i>Застосувати
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="clear-filters-btn">
+                            <i class="fas fa-times me-2"></i>Очистити
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Швидкі дії -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Швидкі дії
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" id="timeline-view-btn">
+                            <i class="fas fa-timeline me-2"></i>Часова шкала
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" id="share-records-btn">
+                            <i class="fas fa-share me-2"></i>Поділитися
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" id="backup-records-btn">
+                            <i class="fas fa-cloud-download-alt me-2"></i>Резервна копія
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" id="print-summary-btn">
+                            <i class="fas fa-print me-2"></i>Друк звіту
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основний контент -->
+        <div class="col-lg-9">
+            <!-- Пошук та сортування -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="search-input"
+                                       placeholder="Пошук в медичних записах...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sort-by">
+                                <option value="date_desc">Найновіші спочатку</option>
+                                <option value="date_asc">Найстаріші спочатку</option>
+                                <option value="type">За типом</option>
+                                <option value="doctor">За лікарем</option>
+                                <option value="importance">За важливістю</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="view-mode" id="grid-view" checked>
+                                <label class="btn btn-outline-secondary" for="grid-view">
+                                    <i class="fas fa-th"></i>
+                                </label>
+                                <input type="radio" class="btn-check" name="view-mode" id="list-view">
+                                <label class="btn btn-outline-secondary" for="list-view">
+                                    <i class="fas fa-list"></i>
+                                </label>
+                                <input type="radio" class="btn-check" name="view-mode" id="timeline-view">
+                                <label class="btn btn-outline-secondary" for="timeline-view">
+                                    <i class="fas fa-stream"></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основні записи -->
+            <div id="records-container">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Завантаження записів...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Пагінація -->
+            <nav aria-label="Навігація по сторінках" id="pagination-nav" style="display: none;">
+                <ul class="pagination justify-content-center" id="pagination-list">
+                    <!-- Буде заповнено динамічно -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно перегляду запису -->
+<div class="modal fade" id="recordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="record-modal-title">Медичний запис</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="record-content">
+                            <!-- Контент запису -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="record-meta">
+                            <h6 class="mb-3">Інформація про запис</h6>
+
+                            <div class="info-item mb-3">
+                                <label class="form-label text-muted">Тип документа</label>
+                                <div id="modal-record-type"></div>
+                            </div>
+
+                            <div class="info-item mb-3">
+                                <label class="form-label text-muted">Дата створення</label>
+                                <div id="modal-record-date"></div>
+                            </div>
+
+                            <div class="info-item mb-3">
+                                <label class="form-label text-muted">Лікар</label>
+                                <div id="modal-record-doctor"></div>
+                            </div>
+
+                            <div class="info-item mb-3" id="modal-appointment-info" style="display: none;">
+                                <label class="form-label text-muted">Прийом</label>
+                                <div id="modal-appointment-details"></div>
+                            </div>
+
+                            <div class="info-item mb-3">
+                                <label class="form-label text-muted">Статус</label>
+                                <div id="modal-record-status"></div>
+                            </div>
+
+                            <div class="info-item mb-3" id="modal-files-section" style="display: none;">
+                                <label class="form-label text-muted">Файли</label>
+                                <div id="modal-files-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <div id="modal-record-actions">
+                    <!-- Дії будуть додані динамічно -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно завантаження документа -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Завантажити документ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="upload-title" class="form-label">Назва документа</label>
+                        <input type="text" class="form-control" id="upload-title" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upload-type" class="form-label">Тип документа</label>
+                        <select class="form-select" id="upload-type" name="record_type" required>
+                            <option value="">Оберіть тип</option>
+                            <option value="diagnosis">Діагноз</option>
+                            <option value="treatment">Лікування</option>
+                            <option value="lab_result">Результат аналізу</option>
+                            <option value="prescription">Рецепт</option>
+                            <option value="imaging">Зображення</option>
+                            <option value="document">Документ</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upload-doctor" class="form-label">Лікар (необов'язково)</label>
+                        <select class="form-select" id="upload-doctor" name="doctor">
+                            <option value="">Оберіть лікаря</option>
+                            <!-- Буде заповнено динамічно -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upload-date" class="form-label">Дата документа</label>
+                        <input type="date" class="form-control" id="upload-date" name="date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upload-files" class="form-label">Файли</label>
+                        <input type="file" class="form-control" id="upload-files" name="files" multiple
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
+                        <div class="form-text">
+                            Підтримувані формати: PDF, DOC, DOCX, JPG, PNG, TXT (макс. 10 МБ на файл)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="upload-description" class="form-label">Опис (необов'язково)</label>
+                        <textarea class="form-control" id="upload-description" name="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="upload-important" name="is_important">
+                            <label class="form-check-label" for="upload-important">
+                                Позначити як важливий
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Завантажити
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно часової шкали -->
+<div class="modal fade" id="timelineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Часова шкала медичних записів</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="timeline-container">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Завантаження часової шкали...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно поділитися -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Поділитися медичними записами</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="share-email" class="form-label">Email лікаря</label>
+                    <input type="email" class="form-control" id="share-email"
+                           placeholder="doctor@example.com">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Документи для поділення</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="share-all" checked>
+                        <label class="form-check-label" for="share-all">
+                            Всі медичні записи
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="share-recent">
+                        <label class="form-check-label" for="share-recent">
+                            Тільки останні (30 днів)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="share-important">
+                        <label class="form-check-label" for="share-important">
+                            Тільки важливі
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="share-expiry" class="form-label">Термін дії доступу</label>
+                    <select class="form-select" id="share-expiry">
+                        <option value="24">24 години</option>
+                        <option value="168" selected>7 днів</option>
+                        <option value="720">30 днів</option>
+                        <option value="0">Без обмежень</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="share-message" class="form-label">Повідомлення (необов'язково)</label>
+                    <textarea class="form-control" id="share-message" rows="3"
+                              placeholder="Додаткове повідомлення для лікаря..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="send-share-btn">
+                    <i class="fas fa-share me-2"></i>Поділитися
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .records-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .record-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .record-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .record-card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+    }
+
+    .record-type-icon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .record-type-icon.diagnosis { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .record-type-icon.treatment { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .record-type-icon.lab_result { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .record-type-icon.prescription { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .record-type-icon.imaging { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .record-type-icon.document { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+
+    .record-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        padding-right: 3rem;
+    }
+
+    .record-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .record-date {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .record-doctor {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .record-card-body {
+        padding: 1.5rem;
+    }
+
+    .record-description {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .record-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .record-tag {
+        padding: 0.25rem 0.75rem;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: #495057;
+    }
+
+    .record-tag.important {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+
+    .record-files {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .record-list-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .record-list-item:hover {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .timeline-container {
+        position: relative;
+        padding: 2rem 0;
+    }
+
+    .timeline-line {
+        position: absolute;
+        left: 30px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 80px;
+        margin-bottom: 2rem;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: 21px;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #667eea;
+        z-index: 1;
+    }
+
+    .timeline-marker.important {
+        border-color: #f39c12;
+        background-color: #f39c12;
+    }
+
+    .timeline-date {
+        position: absolute;
+        left: -50px;
+        top: -5px;
+        width: 60px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .timeline-content {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        position: relative;
+    }
+
+    .timeline-content::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 8px 8px 8px 0;
+        border-color: transparent #e9ecef transparent transparent;
+    }
+
+    .timeline-content::after {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 8px 8px 8px 0;
+        border-color: transparent white transparent transparent;
+    }
+
+    .file-preview {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .file-preview:hover {
+        background-color: #e9ecef;
+    }
+
+    .file-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .file-icon.pdf { background-color: #dc3545; }
+    .file-icon.doc { background-color: #0d6efd; }
+    .file-icon.img { background-color: #198754; }
+    .file-icon.txt { background-color: #6c757d; }
+
+    .file-info {
+        flex-grow: 1;
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .file-size {
+        color: #666;
+        font-size: 0.8rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .stat-item {
+        position: relative;
+    }
+
+    .stat-item::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #e9ecef, transparent);
+    }
+
+    .stat-item:last-child::after {
+        display: none;
+    }
+
+    .importance-indicator {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #f39c12;
+    }
+
+    .view-mode-container {
+        min-height: 400px;
+    }
+
+    @media (max-width: 768px) {
+        .records-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .timeline-item {
+            padding-left: 60px;
+        }
+
+        .timeline-date {
+            left: -40px;
+            width: 50px;
+            font-size: 0.7rem;
+        }
+
+        .record-card-header {
+            padding: 1rem;
+        }
+
+        .record-card-body {
+            padding: 1rem;
+        }
+
+        .record-title {
+            font-size: 1rem;
+        }
+
+        .record-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .record-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .record-card:hover .record-actions {
+        opacity: 1;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0, 0, 0, 0.1);
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        background: rgba(0, 0, 0, 0.2);
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        let currentFilters = {
+            types: ['diagnosis', 'treatment', 'lab_result', 'prescription', 'imaging', 'document'],
+            doctor: '',
+            period: 'all',
+            dateFrom: '',
+            dateTo: '',
+            search: ''
+        };
+        let currentSort = 'date_desc';
+        let currentView = 'grid';
+
+        // Ініціалізація
+        loadRecords();
+        loadStatistics();
+        loadDoctorsList();
+        setupEventHandlers();
+
+        // Встановлення поточної дати для завантаження
+        $('#upload-date').val(new Date().toISOString().split('T')[0]);
+    });
+
+    // Налаштування обробників подій
+    function setupEventHandlers() {
+        // Пошук
+        let searchTimeout;
+        $('#search-input').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentFilters.search = $(this).val();
+                currentPage = 1;
+                loadRecords();
+            }, 500);
+        });
+
+        // Сортування
+        $('#sort-by').change(() => {
+            currentSort = $('#sort-by').val();
+            currentPage = 1;
+            loadRecords();
+        });
+
+        // Вид
+        $('input[name="view-mode"]').change(function() {
+            currentView = $(this).attr('id').replace('-view', '');
+            loadRecords();
+        });
+
+        // Фільтри
+        $('#apply-filters-btn').click(applyFilters);
+        $('#clear-filters-btn').click(clearFilters);
+
+        // Періоди
+        $('input[name="period"]').change(function() {
+            const period = $(this).attr('id').replace('period-', '');
+            if (period === 'custom') {
+                $('.custom-period').show();
+            } else {
+                $('.custom-period').hide();
+            }
+        });
+
+        // Кнопки
+        $('#refresh-btn').click(() => {
+            loadRecords();
+            loadStatistics();
+        });
+
+        $('#upload-document-btn').click(() => $('#uploadModal').modal('show'));
+        $('#timeline-view-btn').click(showTimelineView);
+        $('#share-records-btn').click(() => $('#shareModal').modal('show'));
+        $('#backup-records-btn').click(backupRecords);
+        $('#print-summary-btn').click(printSummary);
+        $('#export-all-btn').click(exportAllRecords);
+
+        // Форми
+        $('#upload-form').submit(handleUpload);
+        $('#send-share-btn').click(handleShare);
+    }
+
+    // Завантаження записів
+    function loadRecords() {
+        showRecordsLoading();
+
+        const params = new URLSearchParams({
+            page: currentPage,
+            sort: currentSort,
+            search: currentFilters.search,
+            types: currentFilters.types.join(','),
+            doctor: currentFilters.doctor,
+            period: currentFilters.period,
+            date_from: currentFilters.dateFrom,
+            date_to: currentFilters.dateTo
+        });
+
+        apiRequest(`/api/medical-records/?${params}`)
+            .then(data => {
+                displayRecords(data);
+                updatePagination(data);
+            })
+            .catch(error => {
+                console.error('Error loading records:', error);
+                showRecordsError();
+            });
+    }
+
+    // Відображення записів
+    function displayRecords(data) {
+        const container = $('#records-container');
+
+        if (!data.results || data.results.length === 0) {
+            container.html(`
+                <div class="empty-state">
+                    <i class="fas fa-file-medical"></i>
+                    <h4>Немає медичних записів</h4>
+                    <p>Завантажте ваші перші медичні документи</p>
+                    <button class="btn btn-primary" onclick="$('#uploadModal').modal('show')">
+                        <i class="fas fa-plus me-2"></i>Завантажити документ
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+
+        switch(currentView) {
+            case 'grid':
+                html = '<div class="records-grid">';
+                data.results.forEach(record => {
+                    html += generateRecordCard(record);
+                });
+                html += '</div>';
+                break;
+
+            case 'list':
+                data.results.forEach(record => {
+                    html += generateRecordListItem(record);
+                });
+                break;
+
+            case 'timeline':
+                html = generateTimelineView(data.results);
+                break;
+        }
+
+        container.html(html);
+    }
+
+    // Генерація картки запису
+    function generateRecordCard(record) {
+        const typeIcon = getTypeIcon(record.record_type);
+        const typeText = getTypeText(record.record_type);
+        const filesCount = record.files ? record.files.length : 0;
+
+        return `
+            <div class="record-card" onclick="viewRecord(${record.id})">
+                ${record.is_important ? '<div class="importance-indicator"></div>' : ''}
+
+                <div class="record-card-header">
+                    <div class="record-type-icon ${record.record_type}">
+                        <i class="${typeIcon}"></i>
+                    </div>
+                    <h6 class="record-title">${record.title}</h6>
+                    <div class="record-meta">
+                        <span class="record-date">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            ${formatDate(record.date)}
+                        </span>
+                        ${record.doctor ? `
+                            <span class="record-doctor">
+                                <i class="fas fa-user-md me-1"></i>
+                                ${record.doctor.first_name} ${record.doctor.last_name}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="record-card-body">
+                    ${record.description ? `
+                        <p class="record-description">${truncateText(record.description, 100)}</p>
+                    ` : ''}
+
+                    <div class="record-tags">
+                        <span class="record-tag">${typeText}</span>
+                        ${record.is_important ? '<span class="record-tag important">Важливий</span>' : ''}
+                        ${record.status ? `<span class="record-tag">${getStatusText(record.status)}</span>` : ''}
+                    </div>
+
+                    ${filesCount > 0 ? `
+                        <div class="record-files">
+                            <i class="fas fa-paperclip me-1"></i>
+                            ${filesCount} ${filesCount === 1 ? 'файл' : 'файлів'}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="record-actions">
+                    <button class="action-btn" onclick="event.stopPropagation(); downloadRecord(${record.id})" title="Завантажити">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="action-btn" onclick="event.stopPropagation(); shareRecord(${record.id})" title="Поділитися">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Генерація елемента списку
+    function generateRecordListItem(record) {
+        const typeIcon = getTypeIcon(record.record_type);
+        const typeText = getTypeText(record.record_type);
+        const filesCount = record.files ? record.files.length : 0;
+
+        return `
+            <div class="record-list-item" onclick="viewRecord(${record.id})">
+                <div class="d-flex align-items-start">
+                    <div class="record-type-icon ${record.record_type} me-3" style="position: static; width: 48px; height: 48px;">
+                        <i class="${typeIcon}"></i>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">${record.title}</h6>
+                            <small class="text-muted">${formatDate(record.date)}</small>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <span class="badge bg-secondary">${typeText}</span>
+                            ${record.is_important ? '<span class="badge bg-warning">Важливий</span>' : ''}
+                            ${record.doctor ? `
+                                <span class="text-muted">
+                                    <i class="fas fa-user-md me-1"></i>
+                                    ${record.doctor.first_name} ${record.doctor.last_name}
+                                </span>
+                            ` : ''}
+                            ${filesCount > 0 ? `
+                                <span class="text-muted">
+                                    <i class="fas fa-paperclip me-1"></i>
+                                    ${filesCount} файлів
+                                </span>
+                            ` : ''}
+                        </div>
+
+                        ${record.description ? `
+                            <p class="text-muted mb-0">${truncateText(record.description, 150)}</p>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Генерація timeline виду
+    function generateTimelineView(records) {
+        if (records.length === 0) {
+            return `
+                <div class="empty-state">
+                    <i class="fas fa-timeline"></i>
+                    <h4>Немає записів для відображення</h4>
+                </div>
+            `;
+        }
+
+        // Групування за датами
+        const groupedRecords = {};
+        records.forEach(record => {
+            const date = record.date;
+            if (!groupedRecords[date]) {
+                groupedRecords[date] = [];
+            }
+            groupedRecords[date].push(record);
+        });
+
+        let html = '<div class="timeline-container"><div class="timeline-line"></div>';
+
+        Object.keys(groupedRecords).sort().reverse().forEach(date => {
+            const dayRecords = groupedRecords[date];
+
+            dayRecords.forEach((record, index) => {
+                const typeIcon = getTypeIcon(record.record_type);
+                const typeText = getTypeText(record.record_type);
+
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-marker ${record.is_important ? 'important' : ''}"></div>
+                        ${index === 0 ? `<div class="timeline-date">${formatShortDate(date)}</div>` : ''}
+
+                        <div class="timeline-content" onclick="viewRecord(${record.id})">
+                            <div class="d-flex align-items-start">
+                                <div class="record-type-icon ${record.record_type} me-3" style="position: static; width: 40px; height: 40px;">
+                                    <i class="${typeIcon}"></i>
+                                </div>
+
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${record.title}</h6>
+                                    <p class="text-muted mb-2">${typeText}</p>
+
+                                    ${record.description ? `
+                                        <p class="mb-2">${truncateText(record.description, 120)}</p>
+                                    ` : ''}
+
+                                    <div class="d-flex align-items-center gap-2">
+                                        ${record.doctor ? `
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-user-md me-1"></i>
+                                                ${record.doctor.first_name} ${record.doctor.last_name}
+                                            </span>
+                                        ` : ''}
+                                        ${record.files && record.files.length > 0 ? `
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-paperclip me-1"></i>
+                                                ${record.files.length} файлів
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    // Перегляд запису
+    function viewRecord(recordId) {
+        apiRequest(`/api/medical-records/${recordId}/`)
+            .then(record => {
+                displayRecordModal(record);
+                $('#recordModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading record:', error);
+                showErrorMessage('Помилка завантаження запису');
+            });
+    }
+
+    // Відображення модального вікна запису
+    function displayRecordModal(record) {
+        $('#record-modal-title').text(record.title);
+        $('#modal-record-type').html(`
+            <span class="badge bg-secondary">
+                <i class="${getTypeIcon(record.record_type)} me-1"></i>
+                ${getTypeText(record.record_type)}
+            </span>
+        `);
+        $('#modal-record-date').text(formatDate(record.date));
+
+        if (record.doctor) {
+            $('#modal-record-doctor').html(`
+                <div class="d-flex align-items-center">
+                    <img src="${record.doctor.avatar || 'https://via.placeholder.com/32'}"
+                         class="rounded-circle me-2" width="32" height="32">
+                    <div>
+                        <div class="fw-bold">${record.doctor.first_name} ${record.doctor.last_name}</div>
+                        <small class="text-muted">${getSpecializationText(record.doctor.primary_specialization)}</small>
+                    </div>
+                </div>
+            `);
+        } else {
+            $('#modal-record-doctor').text('Не вказано');
+        }
+
+        if (record.appointment) {
+            $('#modal-appointment-details').html(`
+                <div class="small">
+                    <div><strong>Дата:</strong> ${formatDate(record.appointment.date)}</div>
+                    <div><strong>Час:</strong> ${record.appointment.time}</div>
+                    <div><strong>Тип:</strong> ${getAppointmentTypeText(record.appointment.appointment_type)}</div>
+                </div>
+            `);
+            $('#modal-appointment-info').show();
+        } else {
+            $('#modal-appointment-info').hide();
+        }
+
+        $('#modal-record-status').html(`
+            <span class="badge bg-${getStatusColor(record.status || 'active')}">
+                ${getStatusText(record.status || 'active')}
+            </span>
+        `);
+
+        // Контент запису
+        let contentHtml = '';
+        if (record.description) {
+            contentHtml += `
+                <div class="mb-4">
+                    <h6>Опис</h6>
+                    <p>${record.description}</p>
+                </div>
+            `;
+        }
+
+        if (record.content) {
+            contentHtml += `
+                <div class="mb-4">
+                    <h6>Деталі</h6>
+                    <div class="record-content">${record.content}</div>
+                </div>
+            `;
+        }
+
+        if (record.diagnosis) {
+            contentHtml += `
+                <div class="mb-4">
+                    <h6>Діагноз</h6>
+                    <p><strong>Код:</strong> ${record.diagnosis.code}</p>
+                    <p><strong>Назва:</strong> ${record.diagnosis.name}</p>
+                    ${record.diagnosis.description ? `<p><strong>Опис:</strong> ${record.diagnosis.description}</p>` : ''}
+                </div>
+            `;
+        }
+
+        if (record.medications && record.medications.length > 0) {
+            contentHtml += `
+                <div class="mb-4">
+                    <h6>Препарати</h6>
+                    <div class="medications-list">
+                        ${record.medications.map(med => `
+                            <div class="medication-item p-3 mb-2 border rounded">
+                                <div class="fw-bold">${med.name}</div>
+                                <div class="text-muted">${med.dosage} - ${med.frequency}</div>
+                                ${med.instructions ? `<div class="small mt-1">${med.instructions}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (record.lab_values && record.lab_values.length > 0) {
+            contentHtml += `
+                <div class="mb-4">
+                    <h6>Результати аналізів</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Показник</th>
+                                    <th>Значення</th>
+                                    <th>Норма</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${record.lab_values.map(value => `
+                                    <tr>
+                                        <td>${value.parameter}</td>
+                                        <td>${value.value} ${value.unit}</td>
+                                        <td>${value.reference_range}</td>
+                                        <td>
+                                            <span class="badge bg-${getLabStatusColor(value.status)}">
+                                                ${getLabStatusText(value.status)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        $('#record-content').html(contentHtml || '<p class="text-muted">Немає додаткової інформації</p>');
+
+        // Файли
+        if (record.files && record.files.length > 0) {
+            let filesHtml = '';
+            record.files.forEach(file => {
+                filesHtml += generateFilePreview(file);
+            });
+            $('#modal-files-list').html(filesHtml);
+            $('#modal-files-section').show();
+        } else {
+            $('#modal-files-section').hide();
+        }
+
+        // Дії
+        generateRecordModalActions(record);
+    }
+
+    // Генерація дій в модальному вікні запису
+    function generateRecordModalActions(record) {
+        let actionsHtml = '';
+
+        if (record.files && record.files.length > 0) {
+            actionsHtml += `
+                <button class="btn btn-outline-primary me-2" onclick="downloadRecord(${record.id})">
+                    <i class="fas fa-download me-1"></i>Завантажити
+                </button>
+            `;
+        }
+
+        actionsHtml += `
+            <button class="btn btn-outline-success me-2" onclick="shareRecord(${record.id})">
+                <i class="fas fa-share me-1"></i>Поділитися
+            </button>
+            <button class="btn btn-outline-info me-2" onclick="printRecord(${record.id})">
+                <i class="fas fa-print me-1"></i>Друк
+            </button>
+        `;
+
+        if (record.can_edit) {
+            actionsHtml += `
+                <button class="btn btn-outline-warning me-2" onclick="editRecord(${record.id})">
+                    <i class="fas fa-edit me-1"></i>Редагувати
+                </button>
+            `;
+        }
+
+        $('#modal-record-actions').html(actionsHtml);
+    }
+
+    // Генерація превью файла
+    function generateFilePreview(file) {
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        let iconClass = 'fas fa-file';
+        let iconType = 'txt';
+
+        if (['pdf'].includes(fileExt)) {
+            iconClass = 'fas fa-file-pdf';
+            iconType = 'pdf';
+        } else if (['doc', 'docx'].includes(fileExt)) {
+            iconClass = 'fas fa-file-word';
+            iconType = 'doc';
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            iconClass = 'fas fa-file-image';
+            iconType = 'img';
+        }
+
+        return `
+            <div class="file-preview" onclick="viewFile('${file.url}', '${file.name}')">
+                <div class="file-icon ${iconType}">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); downloadFile('${file.url}', '${file.name}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Завантаження статистики
+    function loadStatistics() {
+        apiRequest('/api/medical-records/statistics/')
+            .then(stats => {
+                $('#total-documents').text(stats.total_documents || 0);
+                $('#new-records').text(stats.new_records || 0);
+                $('#lab-results').text(stats.lab_results || 0);
+                $('#prescriptions').text(stats.prescriptions || 0);
+            })
+            .catch(error => {
+                console.error('Error loading statistics:', error);
+            });
+    }
+
+    // Завантаження списку лікарів
+    function loadDoctorsList() {
+        apiRequest('/api/my-doctors/')
+            .then(doctors => {
+                let optionsHtml = '<option value="">Всі лікарі</option>';
+                doctors.forEach(doctor => {
+                    optionsHtml += `<option value="${doctor.id}">${doctor.first_name} ${doctor.last_name}</option>`;
+                });
+
+                $('#filter-doctor, #upload-doctor').html(optionsHtml);
+            })
+            .catch(error => {
+                console.error('Error loading doctors:', error);
+            });
+    }
+
+    // Застосування фільтрів
+    function applyFilters() {
+        // Типи документів
+        currentFilters.types = [];
+        $('input[id^="filter-"]:checked').each(function() {
+            const type = $(this).attr('id').replace('filter-', '');
+            if (['diagnosis', 'treatment', 'lab_result', 'prescription', 'imaging', 'document'].includes(type)) {
+                currentFilters.types.push(type);
+            }
+        });
+
+        // Лікар
+        currentFilters.doctor = $('#filter-doctor').val();
+
+        // Період
+        const period = $('input[name="period"]:checked').attr('id').replace('period-', '');
+        currentFilters.period = period;
+
+        if (period === 'custom') {
+            currentFilters.dateFrom = $('#date-from').val();
+            currentFilters.dateTo = $('#date-to').val();
+        } else {
+            currentFilters.dateFrom = '';
+            currentFilters.dateTo = '';
+        }
+
+        currentPage = 1;
+        loadRecords();
+    }
+
+    // Очищення фільтрів
+    function clearFilters() {
+        $('input[id^="filter-"]').prop('checked', true);
+        $('#filter-doctor').val('');
+        $('input[name="period"]').prop('checked', false);
+        $('#period-all').prop('checked', true);
+        $('.custom-period').hide();
+        $('#date-from, #date-to').val('');
+
+        currentFilters = {
+            types: ['diagnosis', 'treatment', 'lab_result', 'prescription', 'imaging', 'document'],
+            doctor: '',
+            period: 'all',
+            dateFrom: '',
+            dateTo: '',
+            search: ''
+        };
+
+        $('#search-input').val('');
+        currentPage = 1;
+        loadRecords();
+    }
+
+    // Обробка завантаження документа
+    function handleUpload(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+
+        const submitBtn = $('#upload-form button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Завантаження...');
+
+        apiRequest('/api/medical-records/', 'POST', formData, true)
+            .then(response => {
+                $('#uploadModal').modal('hide');
+                $('#upload-form')[0].reset();
+                showSuccessMessage('Документ успішно завантажено!');
+                loadRecords();
+                loadStatistics();
+            })
+            .catch(error => {
+                console.error('Error uploading document:', error);
+                showErrorMessage('Помилка при завантаженні документа');
+            })
+            .finally(() => {
+                submitBtn.prop('disabled', false).html(originalText);
+            });
+    }
+
+    // Показ timeline
+    function showTimelineView() {
+        apiRequest('/api/medical-records/timeline/')
+            .then(records => {
+                const timelineHtml = generateTimelineView(records);
+                $('#timeline-container').html(timelineHtml);
+                $('#timelineModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading timeline:', error);
+                showErrorMessage('Помилка завантаження часової шкали');
+            });
+    }
+
+    // Обробка поділення
+    function handleShare() {
+        const shareData = {
+            email: $('#share-email').val(),
+            include_all: $('#share-all').is(':checked'),
+            include_recent: $('#share-recent').is(':checked'),
+            include_important: $('#share-important').is(':checked'),
+            expiry_hours: parseInt($('#share-expiry').val()),
+            message: $('#share-message').val()
+        };
+
+        if (!shareData.email) {
+            showErrorMessage('Вкажіть email лікаря');
+            return;
+        }
+
+        apiRequest('/api/medical-records/share/', 'POST', shareData)
+            .then(response => {
+                $('#shareModal').modal('hide');
+                showSuccessMessage('Записи успішно надіслано!');
+            })
+            .catch(error => {
+                console.error('Error sharing records:', error);
+                showErrorMessage('Помилка при надсиланні записів');
+            });
+    }
+
+    // Додаткові функції
+    function downloadRecord(recordId) {
+        window.open(`/api/medical-records/${recordId}/download/`, '_blank');
+    }
+
+    function shareRecord(recordId) {
+        // Реалізація поділення конкретного запису
+        showInfoMessage('Функція поділення запису буде додана');
+    }
+
+    function printRecord(recordId) {
+        window.open(`/api/medical-records/${recordId}/print/`, '_blank');
+    }
+
+    function editRecord(recordId) {
+        showInfoMessage('Функція редагування запису буде додана');
+    }
+
+    function viewFile(url, name) {
+        window.open(url, '_blank');
+    }
+
+    function downloadFile(url, name) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        link.click();
+    }
+
+    function backupRecords() {
+        showInfoMessage('Створення резервної копії...');
+
+        apiRequest('/api/medical-records/backup/', 'POST')
+            .then(response => {
+                window.open(response.download_url, '_blank');
+                showSuccessMessage('Резервна копія створена!');
+            })
+            .catch(error => {
+                console.error('Error creating backup:', error);
+                showErrorMessage('Помилка створення резервної копії');
+            });
+    }
+
+    function printSummary() {
+        window.open('/api/medical-records/summary/print/', '_blank');
+    }
+
+    function exportAllRecords() {
+        const params = new URLSearchParams({
+            format: 'pdf',
+            types: currentFilters.types.join(','),
+            doctor: currentFilters.doctor,
+            period: currentFilters.period
+        });
+
+        window.open(`/api/medical-records/export/?${params}`, '_blank');
+    }
+
+    // Оновлення пагінації
+    function updatePagination(data) {
+        if (!data.next && !data.previous && data.count <= 20) {
+            $('#pagination-nav').hide();
+            return;
+        }
+
+        $('#pagination-nav').show();
+
+        const totalPages = Math.ceil(data.count / 20);
+        let paginationHtml = '';
+
+        // Попередня сторінка
+        if (data.previous) {
+            paginationHtml += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        // Номери сторінок
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        if (startPage > 1) {
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>`;
+            if (startPage > 2) {
+                paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a></li>`;
+        }
+
+        // Наступна сторінка
+        if (data.next) {
+            paginationHtml += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        $('#pagination-list').html(paginationHtml);
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadRecords();
+    }
+
+    // Допоміжні функції
+    function showRecordsLoading() {
+        $('#records-container').html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Завантаження записів...</span>
+                </div>
+            </div>
+        `);
+    }
+
+    function showRecordsError() {
+        $('#records-container').html(`
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5>Помилка завантаження записів</h5>
+                <button class="btn btn-primary" onclick="loadRecords()">Спробувати знову</button>
+            </div>
+        `);
+    }
+
+    function getTypeIcon(type) {
+        const icons = {
+            'diagnosis': 'fas fa-stethoscope',
+            'treatment': 'fas fa-pills',
+            'lab_result': 'fas fa-vial',
+            'prescription': 'fas fa-prescription',
+            'imaging': 'fas fa-x-ray',
+            'document': 'fas fa-file-alt'
+        };
+        return icons[type] || 'fas fa-file';
+    }
+
+    function getTypeText(type) {
+        const types = {
+            'diagnosis': 'Діагноз',
+            'treatment': 'Лікування',
+            'lab_result': 'Аналіз',
+            'prescription': 'Рецепт',
+            'imaging': 'Зображення',
+            'document': 'Документ'
+        };
+        return types[type] || type;
+    }
+
+    function getStatusText(status) {
+        const statuses = {
+            'active': 'Активний',
+            'completed': 'Завершений',
+            'cancelled': 'Скасований',
+            'pending': 'Очікується'
+        };
+        return statuses[status] || status;
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'active': 'success',
+            'completed': 'primary',
+            'cancelled': 'danger',
+            'pending': 'warning'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getLabStatusText(status) {
+        const statuses = {
+            'normal': 'Норма',
+            'high': 'Підвищено',
+            'low': 'Знижено',
+            'critical': 'Критично'
+        };
+        return statuses[status] || status;
+    }
+
+    function getLabStatusColor(status) {
+        const colors = {
+            'normal': 'success',
+            'high': 'warning',
+            'low': 'warning',
+            'critical': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('uk-UA', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    function formatShortDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('uk-UA', {
+            day: '2-digit',
+            month: '2-digit'
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function truncateText(text, length) {
+        if (text.length <= length) return text;
+        return text.substring(0, length) + '...';
+    }
+
+    function getSpecializationText(specialization) {
+        const specializations = {
+            'physiotherapy': 'Фізіотерапія',
+            'occupational_therapy': 'Ерготерапія',
+            'speech_therapy': 'Логопедія',
+            'psychology': 'Психологія',
+            'massage': 'Масаж',
+            'cardio_rehabilitation': 'Кардіореабілітація',
+            'neuro_rehabilitation': 'Нейрореабілітація',
+            'orthopedic_rehabilitation': 'Ортопедична реабілітація'
+        };
+        return specializations[specialization] || 'Інше';
+    }
+
+    function getAppointmentTypeText(type) {
+        const types = {
+            'consultation': 'Консультація',
+            'therapy': 'Терапія',
+            'examination': 'Обстеження',
+            'follow_up': 'Повторний огляд'
+        };
+        return types[type] || type;
+    }
+</script>
+{% endblock %}

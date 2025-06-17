@@ -1,0 +1,215 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Центр реабілітації{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="bi bi-heart-pulse me-3"></i>
+                    Центр реабілітації
+                </h1>
+                <p class="lead mb-4">
+                    Професійна система управління процесом реабілітації пацієнтів. 
+                    Безпечна, надійна та ефективна платформа для терапевтів та пацієнтів.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'core:login' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                        Увійти в систему
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="bi bi-hospital display-1 opacity-75"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h2 class="h3 mb-4">Можливості системи</h2>
+            <p class="text-muted">Комплексне рішення для управління процесом реабілітації</p>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Управління пацієнтами</h5>
+                    <p class="card-text text-muted">
+                        Ведення медичних карт, історії захворювань та призначень. 
+                        Безпечне зберігання персональних даних.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-clipboard-check text-success" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Програми реабілітації</h5>
+                    <p class="card-text text-muted">
+                        Створення індивідуальних програм відновлення з вправами, 
+                        розкладом та контролем прогресу.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-calendar-event text-info" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Записи на прийом</h5>
+                    <p class="card-text text-muted">
+                        Зручна система планування та управління візитами 
+                        з нагадуваннями та календарем.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-graph-up text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Відстеження прогресу</h5>
+                    <p class="card-text text-muted">
+                        Моніторинг результатів лікування з візуалізацією 
+                        динаміки та звітністю.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-shield-check text-secondary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Безпека даних</h5>
+                    <p class="card-text text-muted">
+                        Багаторівнева система захисту з шифруванням 
+                        та контролем доступу за ролями.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-chat-dots text-danger" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="card-title">Комунікація</h5>
+                    <p class="card-text text-muted">
+                        Зв'язок між терапевтами та пацієнтами з можливістю 
+                        обміну повідомленнями та консультацій.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ролі в системі -->
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h2 class="h3 mb-4">Ролі користувачів</h2>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4">
+            <div class="text-center">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person-gear text-primary" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5>Адміністратор</h5>
+                <p class="text-muted">
+                    Управління системою, користувачами та налаштуваннями. 
+                    Доступ до всіх функцій та звітності.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="text-center">
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person-badge text-success" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5>Терапевт</h5>
+                <p class="text-muted">
+                    Робота з пацієнтами, створення програм реабілітації, 
+                    ведення медичної документації.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="text-center">
+                <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person text-info" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5>Пацієнт</h5>
+                <p class="text-muted">
+                    Перегляд особистих програм, запис на прийоми, 
+                    відстеження прогресу відновлення.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Security notice -->
+<div class="bg-light py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="d-flex align-items-center justify-content-center gap-2 text-muted">
+                    <i class="bi bi-shield-lock"></i>
+                    <small>
+                        Система захищена SSL шифруванням та відповідає стандартам безпеки медичних даних
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+}
+
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
+}
+</style>
+{% endblock %}

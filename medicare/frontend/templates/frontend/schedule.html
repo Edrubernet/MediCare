@@ -1,0 +1,1021 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Розклад - Medicare{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Мій розклад</h1>
+        <div>
+            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addAppointmentModal">
+                <i class="fas fa-plus me-2"></i>Додати прийом
+            </button>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary" id="view-day">День</button>
+                <button type="button" class="btn btn-outline-secondary active" id="view-week">Тиждень</button>
+                <button type="button" class="btn btn-outline-secondary" id="view-month">Місяць</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Навігація по датах -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary me-2" id="prev-period">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h4 class="mb-0" id="current-period">Завантаження...</h4>
+                        <button class="btn btn-outline-secondary ms-2" id="next-period">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <button class="btn btn-info" id="today-btn">Сьогодні</button>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="input-group" style="max-width: 200px; margin-left: auto;">
+                        <input type="date" class="form-control" id="date-picker">
+                        <button class="btn btn-outline-secondary" type="button" id="go-to-date">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Статистика дня -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 id="today-appointments" class="text-primary">0</h3>
+                    <p class="text-muted">Прийомів сьогодні</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 id="upcoming-appointments" class="text-info">0</h3>
+                    <p class="text-muted">Наступних прийомів</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 id="completed-appointments" class="text-success">0</h3>
+                    <p class="text-muted">Завершених прийомів</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 id="cancelled-appointments" class="text-danger">0</h3>
+                    <p class="text-muted">Скасованих прийомів</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <!-- Список прийомів на сьогодні -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Прийоми на сьогодні</h5>
+        </div>
+        <div class="card-body">
+            <div id="today-appointments-list">
+                <p class="text-center">Завантаження прийомів...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно додавання прийому -->
+<div class="modal fade" id="addAppointmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати новий прийом</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-appointment-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="patient-select" class="form-label">Пацієнт *</label>
+                        <select class="form-select" id="patient-select" name="patient" required>
+                            <option value="">Оберіть пацієнта</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="appointment-date" class="form-label">Дата *</label>
+                            <input type="date" class="form-control" id="appointment-date" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="appointment-time" class="form-label">Час *</label>
+                            <input type="time" class="form-control" id="appointment-time" name="time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-duration" class="form-label">Тривалість (хвилин)</label>
+                        <select class="form-select" id="appointment-duration" name="duration">
+                            <option value="30">30 хвилин</option>
+                            <option value="45">45 хвилин</option>
+                            <option value="60">1 година</option>
+                            <option value="90">1.5 години</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-type" class="form-label">Тип прийому</label>
+                        <select class="form-select" id="appointment-type" name="type">
+                            <option value="consultation">Консультація</option>
+                            <option value="checkup">Огляд</option>
+                            <option value="therapy">Терапія</option>
+                            <option value="follow-up">Повторний огляд</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="appointment-notes" class="form-label">Примітки</label>
+                        <textarea class="form-control" id="appointment-notes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="send-notification" name="send_notification" checked>
+                        <label class="form-check-label" for="send-notification">
+                            Надіслати сповіщення пацієнту
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Створити прийом</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно деталей прийому -->
+<div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Деталі прийому</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Інформація про пацієнта</h6>
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="/static/frontend/img/default-avatar.svg" class="rounded-circle me-3" alt="Patient" style="width: 60px; height: 60px;">
+                            <div>
+                                <h5 id="detail-patient-name">Ім'я пацієнта</h5>
+                                <p class="text-muted mb-0" id="detail-patient-phone">Телефон</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Деталі прийому</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Дата та час:</span>
+                                <span id="detail-appointment-time">Дата/час</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Тривалість:</span>
+                                <span id="detail-appointment-duration">30 хв</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Тип:</span>
+                                <span id="detail-appointment-type">Консультація</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>Статус:</span>
+                                <span id="detail-appointment-status" class="badge">Статус</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Примітки</h6>
+                    <p id="detail-appointment-notes" class="border p-3 rounded">Примітки до прийому</p>
+                </div>
+                
+                <div class="mt-4" id="appointment-actions">
+                    <h6>Швидкі дії</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-success btn-sm" id="start-appointment-btn">
+                            <i class="fas fa-play me-1"></i>Розпочати прийом
+                        </button>
+                        <button class="btn btn-info btn-sm" id="view-patient-profile-btn">
+                            <i class="fas fa-user me-1"></i>Профіль пацієнта
+                        </button>
+                        <button class="btn btn-warning btn-sm" id="reschedule-appointment-btn">
+                            <i class="fas fa-calendar me-1"></i>Перенести
+                        </button>
+                        <button class="btn btn-danger btn-sm" id="cancel-appointment-btn">
+                            <i class="fas fa-times me-1"></i>Скасувати
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно перенесення прийому -->
+<div class="modal fade" id="rescheduleAppointmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Перенесення прийому</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reschedule-form">
+                <div class="modal-body">
+                    <input type="hidden" id="reschedule-appointment-id">
+                    
+                    <!-- Current appointment info -->
+                    <div class="alert alert-info">
+                        <h6 class="mb-2">Поточний прийом:</h6>
+                        <div><strong>Пацієнт:</strong> <span id="reschedule-patient-name"></span></div>
+                        <div><strong>Дата:</strong> <span id="reschedule-current-date"></span></div>
+                        <div><strong>Час:</strong> <span id="reschedule-current-time"></span></div>
+                    </div>
+                    
+                    <!-- New appointment details -->
+                    <h6 class="mb-3">Нова дата та час:</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="reschedule-new-date" class="form-label">Нова дата *</label>
+                            <input type="date" class="form-control" id="reschedule-new-date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="reschedule-new-time" class="form-label">Новий час *</label>
+                            <select class="form-select" id="reschedule-new-time" required>
+                                <option value="">Оберіть час</option>
+                                <option value="08:00">08:00</option>
+                                <option value="09:00">09:00</option>
+                                <option value="10:00">10:00</option>
+                                <option value="11:00">11:00</option>
+                                <option value="12:00">12:00</option>
+                                <option value="13:00">13:00</option>
+                                <option value="14:00">14:00</option>
+                                <option value="15:00">15:00</option>
+                                <option value="16:00">16:00</option>
+                                <option value="17:00">17:00</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reschedule-reason" class="form-label">Причина перенесення</label>
+                        <textarea class="form-control" id="reschedule-reason" rows="3" placeholder="Опишіть причину перенесення прийому..."></textarea>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="reschedule-notify-patient" checked>
+                        <label class="form-check-label" for="reschedule-notify-patient">
+                            Повідомити пацієнта про зміну
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar me-2"></i>Перенести прийом
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-container {
+        min-height: 400px;
+    }
+    
+    .appointment-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    
+    .appointment-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .appointment-scheduled {
+        border-left-color: #007bff;
+    }
+    
+    .appointment-in-progress {
+        border-left-color: #28a745;
+    }
+    
+    .appointment-completed {
+        border-left-color: #6c757d;
+    }
+    
+    .appointment-cancelled {
+        border-left-color: #dc3545;
+    }
+    
+    .time-slot {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        background-color: #f8f9fa;
+    }
+    
+    .time-slot.occupied {
+        background-color: #e3f2fd;
+        border-color: #007bff;
+    }
+    
+    .btn-group button.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentView = 'week';
+        let currentDate = new Date();
+        let appointments = [];
+        
+        // Ініціалізація
+        initializeSchedule();
+        loadPatientsList();
+        
+        // Обробка перемикання видів
+        $('#view-day, #view-week, #view-month').click(function() {
+            $('.btn-group button').removeClass('active');
+            $(this).addClass('active');
+            currentView = this.id.split('-')[1];
+            updateScheduleView();
+        });
+        
+        // Навігація по періодах
+        $('#prev-period').click(() => navigatePeriod(-1));
+        $('#next-period').click(() => navigatePeriod(1));
+        $('#today-btn').click(() => goToToday());
+        $('#go-to-date').click(() => goToSelectedDate());
+        
+        // Обробка форми додавання прийому
+        $('#add-appointment-form').submit(function(e) {
+            e.preventDefault();
+            createAppointment();
+        });
+
+        // Обробка форми перенесення прийому
+        $('#reschedule-form').submit(function(e) {
+            e.preventDefault();
+            submitReschedule();
+        });
+        
+        // Налаштування мінімальної дати
+        $('#appointment-date').attr('min', new Date().toISOString().split('T')[0]);
+        $('#date-picker').val(new Date().toISOString().split('T')[0]);
+    });
+    
+    // Ініціалізація розкладу
+    function initializeSchedule() {
+        updatePeriodLabel();
+        loadAppointments();
+        loadTodayAppointments();
+        updateStatistics();
+    }
+    
+    // Завантаження прийомів
+    function loadAppointments() {
+        const startDate = getViewStartDate();
+        const endDate = getViewEndDate();
+        
+        apiRequest(`/api/consultations/?start_date=${startDate}&end_date=${endDate}`)
+            .then(data => {
+                appointments = data.results || data;
+                updateScheduleView();
+                updateStatistics();
+            })
+            .catch(error => {
+                console.error('Error loading appointments:', error);
+                showErrorMessage('Помилка завантаження прийомів');
+            });
+    }
+    
+    // Оновлення виду розкладу
+    function updateScheduleView() {
+        let scheduleHtml = '';
+        
+        switch(currentView) {
+            case 'day':
+                scheduleHtml = generateDayView();
+                break;
+            case 'week':
+                scheduleHtml = generateWeekView();
+                break;
+            case 'month':
+                scheduleHtml = generateMonthView();
+                break;
+        }
+        
+        $('#calendar-container').html(scheduleHtml);
+    }
+    
+    // Генерація денного виду
+    function generateDayView() {
+        const todayAppointments = getAppointmentsForDate(currentDate);
+        let html = '<div class="row">';
+        
+        // Часові слоти з 8:00 до 18:00
+        for (let hour = 8; hour < 18; hour++) {
+            const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+            const appointment = todayAppointments.find(app => 
+                new Date(app.datetime).getHours() === hour
+            );
+            
+            html += `
+                <div class="col-12 mb-2">
+                    <div class="time-slot ${appointment ? 'occupied' : ''}" 
+                         onclick="${appointment ? `showAppointmentDetails(${appointment.id})` : `addAppointmentAtTime('${timeSlot}')`}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${timeSlot}</strong>
+                            ${appointment ? `
+                                <div>
+                                    <span class="badge bg-primary">${appointment.patient_name}</span>
+                                    <small class="text-muted ms-2">${appointment.type}</small>
+                                </div>
+                            ` : '<small class="text-muted">Вільно</small>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+    
+    // Генерація тижневого виду
+    function generateWeekView() {
+        const weekStart = getWeekStart(currentDate);
+        let html = '<div class="table-responsive"><table class="table table-bordered">';
+        
+        // Заголовки днів тижня
+        html += '<thead><tr><th style="width: 80px;">Час</th>';
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(weekStart);
+            day.setDate(day.getDate() + i);
+            const dayName = day.toLocaleDateString('uk-UA', { weekday: 'short' });
+            const dayDate = day.getDate();
+            html += `<th class="text-center">${dayName}<br><small>${dayDate}</small></th>`;
+        }
+        html += '</tr></thead><tbody>';
+        
+        // Рядки з часовими слотами
+        for (let hour = 8; hour < 18; hour++) {
+            html += `<tr><td class="text-center align-middle"><strong>${hour}:00</strong></td>`;
+            
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(weekStart);
+                day.setDate(day.getDate() + i);
+                day.setHours(hour, 0, 0, 0);
+                
+                const dayAppointments = getAppointmentsForDate(day);
+                const appointment = dayAppointments.find(app => 
+                    new Date(app.datetime).getHours() === hour
+                );
+                
+                html += '<td class="p-1" style="height: 60px;">';
+                if (appointment) {
+                    html += `
+                        <div class="appointment-card appointment-${appointment.status} p-2 h-100" 
+                             onclick="showAppointmentDetails(${appointment.id})">
+                            <small><strong>${appointment.patient_name}</strong></small><br>
+                            <small class="text-muted">${appointment.type}</small>
+                        </div>
+                    `;
+                }
+                html += '</td>';
+            }
+            
+            html += '</tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        return html;
+    }
+    
+    // Генерація місячного виду
+    function generateMonthView() {
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        let html = '<div class="table-responsive"><table class="table table-bordered">';
+        
+        // Заголовки днів тижня
+        html += '<thead><tr>';
+        const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+        weekdays.forEach(day => {
+            html += `<th class="text-center">${day}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        
+        // Генерація календарної сітки
+        const firstDayOfWeek = (monthStart.getDay() + 6) % 7; // Понеділок = 0
+        let currentDateInMonth = new Date(monthStart);
+        currentDateInMonth.setDate(currentDateInMonth.getDate() - firstDayOfWeek);
+        
+        for (let week = 0; week < 6; week++) {
+            html += '<tr>';
+            
+            for (let day = 0; day < 7; day++) {
+                const dayAppointments = getAppointmentsForDate(currentDateInMonth);
+                const isCurrentMonth = currentDateInMonth.getMonth() === currentDate.getMonth();
+                const isToday = currentDateInMonth.toDateString() === new Date().toDateString();
+                
+                html += `<td class="p-1 ${isCurrentMonth ? '' : 'text-muted'}" style="height: 100px; vertical-align: top;">`;
+                html += `<div class="d-flex justify-content-between align-items-start">`;
+                html += `<small class="${isToday ? 'fw-bold text-primary' : ''}">${currentDateInMonth.getDate()}</small>`;
+                if (dayAppointments.length > 0) {
+                    html += `<span class="badge bg-primary rounded-pill">${dayAppointments.length}</span>`;
+                }
+                html += '</div>';
+                
+                // Відображення прийомів (максимум 3)
+                dayAppointments.slice(0, 3).forEach(appointment => {
+                    const time = new Date(appointment.datetime).toLocaleTimeString('uk-UA', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    html += `
+                        <div class="mt-1">
+                            <small class="d-block text-truncate" style="font-size: 0.7rem;" 
+                                   onclick="showAppointmentDetails(${appointment.id})" 
+                                   title="${appointment.patient_name} - ${time}">
+                                ${time} ${appointment.patient_name}
+                            </small>
+                        </div>
+                    `;
+                });
+                
+                if (dayAppointments.length > 3) {
+                    html += `<small class="text-muted">+${dayAppointments.length - 3} ще</small>`;
+                }
+                
+                html += '</td>';
+                currentDateInMonth.setDate(currentDateInMonth.getDate() + 1);
+            }
+            
+            html += '</tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        return html;
+    }
+    
+    // Завантаження списку пацієнтів
+    function loadPatientsList() {
+        apiRequest('/api/staff/profiles/')
+            .then(response => {
+                if (response.results && response.results.length > 0) {
+                    const doctorId = response.results[0].id;
+                    return apiRequest(`/api/staff/staff-profiles/${doctorId}/patients/`);
+                }
+                throw new Error('Doctor profile not found');
+            })
+            .then(data => {
+                const patientSelect = $('#patient-select');
+                patientSelect.empty().append('<option value="">Оберіть пацієнта</option>');
+                
+                if (data.results) {
+                    data.results.forEach(patient => {
+                        patientSelect.append(`
+                            <option value="${patient.id}">${patient.full_name}</option>
+                        `);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading patients:', error);
+            });
+    }
+    
+    // Завантаження прийомів на сьогодні
+    function loadTodayAppointments() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        apiRequest(`/api/consultations/?date=${today}`)
+            .then(data => {
+                const todayAppointments = data.results || data;
+                displayTodayAppointments(todayAppointments);
+            })
+            .catch(error => {
+                console.error('Error loading today appointments:', error);
+                $('#today-appointments-list').html('<p class="text-center text-danger">Помилка завантаження прийомів</p>');
+            });
+    }
+    
+    // Відображення прийомів на сьогодні
+    function displayTodayAppointments(appointmentsList) {
+        if (appointmentsList.length === 0) {
+            $('#today-appointments-list').html('<p class="text-center text-muted">На сьогодні прийомів немає</p>');
+            return;
+        }
+        
+        let html = '';
+        appointmentsList.forEach(appointment => {
+            const time = new Date(appointment.datetime).toLocaleTimeString('uk-UA', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            html += `
+                <div class="appointment-card appointment-${appointment.status} mb-3 p-3" 
+                     onclick="showAppointmentDetails(${appointment.id})">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <h5 class="mb-0">${time}</h5>
+                                <small class="text-muted">${appointment.duration} хв</small>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">${appointment.patient_name}</h6>
+                                <p class="mb-0 text-muted">${appointment.type}</p>
+                            </div>
+                        </div>
+                        <span class="badge bg-${getStatusColor(appointment.status)}">${getStatusText(appointment.status)}</span>
+                    </div>
+                    ${appointment.notes ? `<p class="mt-2 mb-0 small">${appointment.notes}</p>` : ''}
+                </div>
+            `;
+        });
+        
+        $('#today-appointments-list').html(html);
+    }
+    
+    // Створення нового прийому
+    function createAppointment() {
+        const formData = {
+            patient: $('#patient-select').val(),
+            datetime: $('#appointment-date').val() + 'T' + $('#appointment-time').val(),
+            duration: $('#appointment-duration').val(),
+            type: $('#appointment-type').val(),
+            notes: $('#appointment-notes').val(),
+            send_notification: $('#send-notification').is(':checked')
+        };
+        
+        apiRequest('/api/consultations/', 'POST', formData)
+            .then(response => {
+                $('#addAppointmentModal').modal('hide');
+                $('#add-appointment-form')[0].reset();
+                showSuccessMessage('Прийом успішно створено');
+                loadAppointments();
+                loadTodayAppointments();
+            })
+            .catch(error => {
+                console.error('Error creating appointment:', error);
+                showErrorMessage('Помилка створення прийому');
+            });
+    }
+    
+    // Показ деталей прийому
+    function showAppointmentDetails(appointmentId) {
+        const appointment = appointments.find(app => app.id === appointmentId);
+        
+        if (!appointment) {
+            showErrorMessage('Прийом не знайдено');
+            return;
+        }
+        
+        // Заповнення модального вікна
+        $('#detail-patient-name').text(appointment.patient_name);
+        $('#detail-patient-phone').text(appointment.patient_phone || 'Не вказано');
+        
+        const datetime = new Date(appointment.datetime);
+        $('#detail-appointment-time').text(datetime.toLocaleString('uk-UA'));
+        $('#detail-appointment-duration').text(`${appointment.duration} хв`);
+        $('#detail-appointment-type').text(appointment.type);
+        $('#detail-appointment-status').text(getStatusText(appointment.status))
+            .removeClass().addClass(`badge bg-${getStatusColor(appointment.status)}`);
+        $('#detail-appointment-notes').text(appointment.notes || 'Примітки відсутні');
+        
+        // Налаштування кнопок дій
+        setupAppointmentActions(appointment);
+        
+        $('#appointmentDetailsModal').modal('show');
+    }
+    
+    // Налаштування дій для прийому
+    function setupAppointmentActions(appointment) {
+        // Кнопка початку прийому
+        $('#start-appointment-btn').off('click').on('click', function() {
+            startAppointment(appointment.id);
+        });
+        
+        // Кнопка перегляду профілю пацієнта
+        $('#view-patient-profile-btn').off('click').on('click', function() {
+            window.location.href = `/patients/${appointment.patient_id}/`;
+        });
+        
+        // Кнопка перенесення прийому
+        $('#reschedule-appointment-btn').off('click').on('click', function() {
+            rescheduleAppointment(appointment.id);
+        });
+        
+        // Кнопка скасування прийому
+        $('#cancel-appointment-btn').off('click').on('click', function() {
+            cancelAppointment(appointment.id);
+        });
+    }
+    
+    // Початок прийому
+    function startAppointment(appointmentId) {
+        apiRequest(`/api/consultations/${appointmentId}/start/`, 'POST')
+            .then(response => {
+                $('#appointmentDetailsModal').modal('hide');
+                showSuccessMessage('Прийом розпочато');
+                loadAppointments();
+                loadTodayAppointments();
+            })
+            .catch(error => {
+                console.error('Error starting appointment:', error);
+                showErrorMessage('Помилка початку прийому');
+            });
+    }
+    
+    // Перенесення прийому
+    function rescheduleAppointment(appointmentId) {
+        $('#appointmentDetailsModal').modal('hide');
+        
+        // Show reschedule modal with current appointment data
+        apiRequest(`/api/consultations/${appointmentId}/`)
+            .then(appointment => {
+                // Populate reschedule form with current data
+                $('#reschedule-appointment-id').val(appointmentId);
+                $('#reschedule-current-date').text(new Date(appointment.datetime).toLocaleDateString('uk-UA'));
+                $('#reschedule-current-time').text(new Date(appointment.datetime).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'}));
+                $('#reschedule-patient-name').text(appointment.patient_name);
+                
+                // Set minimum date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                $('#reschedule-new-date').attr('min', tomorrow.toISOString().split('T')[0]);
+                $('#reschedule-new-date').val('');
+                $('#reschedule-new-time').val('');
+                $('#reschedule-reason').val('');
+                
+                $('#rescheduleAppointmentModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error loading appointment:', error);
+                showErrorMessage('Помилка завантаження даних прийому');
+            });
+    }
+
+    function submitReschedule() {
+        const appointmentId = $('#reschedule-appointment-id').val();
+        const newDate = $('#reschedule-new-date').val();
+        const newTime = $('#reschedule-new-time').val();
+        const reason = $('#reschedule-reason').val();
+        const notifyPatient = $('#reschedule-notify-patient').is(':checked');
+        
+        if (!appointmentId || !newDate || !newTime) {
+            showErrorMessage('Будь ласка, заповніть всі обов\'язкові поля');
+            return;
+        }
+        
+        const newDatetime = `${newDate}T${newTime}:00`;
+        
+        const requestData = {
+            datetime: newDatetime,
+            reason: reason,
+            notify_patient: notifyPatient
+        };
+        
+        apiRequest(`/api/consultations/${appointmentId}/reschedule/`, 'POST', requestData)
+            .then(response => {
+                $('#rescheduleAppointmentModal').modal('hide');
+                showSuccessMessage('Прийом успішно перенесено');
+                loadAppointments();
+                loadTodayAppointments();
+            })
+            .catch(error => {
+                console.error('Error rescheduling appointment:', error);
+                showErrorMessage('Помилка перенесення прийому. Можливо, обраний час уже зайнятий.');
+            });
+    }
+    
+    // Скасування прийому
+    function cancelAppointment(appointmentId) {
+        const confirmed = confirm('Ви впевнені, що хочете скасувати цей прийом?');
+        if (confirmed) {
+            const reason = prompt('Введіть причину скасування (необов\'язково):');
+            
+            const requestData = {
+                reason: reason || 'Скасовано лікарем',
+                notify_patient: true
+            };
+            
+            apiRequest(`/api/consultations/${appointmentId}/cancel/`, 'POST', requestData)
+                .then(response => {
+                    $('#appointmentDetailsModal').modal('hide');
+                    showSuccessMessage('Прийом скасовано');
+                    loadAppointments();
+                    loadTodayAppointments();
+                })
+                .catch(error => {
+                    console.error('Error cancelling appointment:', error);
+                    showErrorMessage('Помилка скасування прийому');
+                });
+        }
+    }
+    
+    // Оновлення статистики
+    function updateStatistics() {
+        const today = new Date().toISOString().split('T')[0];
+        const todayAppointments = appointments.filter(app => 
+            app.datetime.startsWith(today)
+        );
+        
+        const upcoming = appointments.filter(app => 
+            new Date(app.datetime) > new Date() && app.status === 'scheduled'
+        );
+        
+        const completed = appointments.filter(app => app.status === 'completed');
+        const cancelled = appointments.filter(app => app.status === 'cancelled');
+        
+        $('#today-appointments').text(todayAppointments.length);
+        $('#upcoming-appointments').text(upcoming.length);
+        $('#completed-appointments').text(completed.length);
+        $('#cancelled-appointments').text(cancelled.length);
+    }
+    
+    // Навігація по періодах
+    function navigatePeriod(direction) {
+        switch(currentView) {
+            case 'day':
+                currentDate.setDate(currentDate.getDate() + direction);
+                break;
+            case 'week':
+                currentDate.setDate(currentDate.getDate() + (direction * 7));
+                break;
+            case 'month':
+                currentDate.setMonth(currentDate.getMonth() + direction);
+                break;
+        }
+        
+        updatePeriodLabel();
+        loadAppointments();
+    }
+    
+    // Перехід до сьогодні
+    function goToToday() {
+        currentDate = new Date();
+        updatePeriodLabel();
+        loadAppointments();
+        loadTodayAppointments();
+    }
+    
+    // Перехід до обраної дати
+    function goToSelectedDate() {
+        const selectedDate = new Date($('#date-picker').val());
+        if (!isNaN(selectedDate)) {
+            currentDate = selectedDate;
+            updatePeriodLabel();
+            loadAppointments();
+        }
+    }
+    
+    // Оновлення підпису періоду
+    function updatePeriodLabel() {
+        let label = '';
+        
+        switch(currentView) {
+            case 'day':
+                label = currentDate.toLocaleDateString('uk-UA', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                break;
+            case 'week':
+                const weekStart = getWeekStart(currentDate);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                label = `${weekStart.getDate()} - ${weekEnd.getDate()} ${weekEnd.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' })}`;
+                break;
+            case 'month':
+                label = currentDate.toLocaleDateString('uk-UA', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                });
+                break;
+        }
+        
+        $('#current-period').text(label);
+    }
+    
+    // Допоміжні функції
+    function getWeekStart(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Понеділок як початок тижня
+        return new Date(d.setDate(diff));
+    }
+    
+    function getViewStartDate() {
+        switch(currentView) {
+            case 'day':
+                return currentDate.toISOString().split('T')[0];
+            case 'week':
+                return getWeekStart(currentDate).toISOString().split('T')[0];
+            case 'month':
+                return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
+        }
+    }
+    
+    function getViewEndDate() {
+        switch(currentView) {
+            case 'day':
+                return currentDate.toISOString().split('T')[0];
+            case 'week':
+                const weekEnd = new Date(getWeekStart(currentDate));
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                return weekEnd.toISOString().split('T')[0];
+            case 'month':
+                return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
+        }
+    }
+    
+    function getAppointmentsForDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        return appointments.filter(app => app.datetime.startsWith(dateStr));
+    }
+    
+    function getStatusColor(status) {
+        switch(status) {
+            case 'scheduled': return 'primary';
+            case 'in_progress': return 'success';
+            case 'completed': return 'secondary';
+            case 'cancelled': return 'danger';
+            default: return 'secondary';
+        }
+    }
+    
+    function getStatusText(status) {
+        switch(status) {
+            case 'scheduled': return 'Заплановано';
+            case 'in_progress': return 'В процесі';
+            case 'completed': return 'Завершено';
+            case 'cancelled': return 'Скасовано';
+            default: return 'Невідомо';
+        }
+    }
+    
+    function showSuccessMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-success alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+    
+    function showErrorMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-danger alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+</script>
+{% endblock %}

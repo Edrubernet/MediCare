@@ -1,0 +1,220 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Консультації{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Консультації</h4>
+            <a href="{% url 'consultation:consultation_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Запланувати консультацію
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <form method="get" class="mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        {{ form.search }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.status }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.consultation_type }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.date_from }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.date_to }}
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Consultations Table -->
+            {% if consultations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Пацієнт</th>
+                                <th>Дата та час</th>
+                                <th>Тип</th>
+                                <th>Статус</th>
+                                <th>Тривалість</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consultation in consultations %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar me-2">
+                                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 35px; height: 35px;">
+                                                    <span class="text-white fw-bold small">
+                                                        {{ consultation.patient.user.first_name|first }}{{ consultation.patient.user.last_name|first }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ consultation.patient.user.get_full_name }}</h6>
+                                                <small class="text-muted">{{ consultation.patient.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ consultation.start_time|date:"d.m.Y" }}</strong>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ consultation.start_time|time:"H:i" }} - {{ consultation.end_time|time:"H:i" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if consultation.consultation_type == 'video' %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-video"></i> {{ consultation.get_consultation_type_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-user"></i> {{ consultation.get_consultation_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if consultation.status == 'scheduled' %}
+                                            <span class="badge bg-primary">{{ consultation.get_status_display }}</span>
+                                        {% elif consultation.status == 'in_progress' %}
+                                            <span class="badge bg-warning">{{ consultation.get_status_display }}</span>
+                                        {% elif consultation.status == 'completed' %}
+                                            <span class="badge bg-success">{{ consultation.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ consultation.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {% widthratio consultation.end_time|timeuntil:consultation.start_time 60 1 %} хв
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'consultation:consultation_detail' consultation.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if consultation.consultation_type == 'video' and consultation.video_link %}
+                                                <a href="{{ consultation.video_link }}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   target="_blank">
+                                                    <i class="fas fa-video"></i>
+                                                </a>
+                                            {% endif %}
+                                            
+                                            {% if consultation.status == 'scheduled' %}
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        onclick="updateStatus({{ consultation.pk }}, 'in_progress')">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                            {% elif consultation.status == 'in_progress' %}
+                                                <button class="btn btn-sm btn-outline-warning" 
+                                                        onclick="updateStatus({{ consultation.pk }}, 'completed')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if consultations.has_other_pages %}
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if consultations.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ consultations.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Попередня
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in consultations.paginator.page_range %}
+                                {% if consultations.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if consultations.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ consultations.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Наступна
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-5x text-muted mb-3"></i>
+                    <h5 class="text-muted">Консультації не знайдені</h5>
+                    <p class="text-muted">Заплануйте першу консультацію з пацієнтом</p>
+                    <a href="{% url 'consultation:consultation_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Запланувати консультацію
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus(consultationId, newStatus) {
+    if (confirm('Ви впевнені, що хочете змінити статус консультації?')) {
+        fetch(`/consultation/${consultationId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `status=${newStatus}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Помилка при оновленні статусу: ' + (data.error || 'Невідома помилка'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Помилка при оновленні статусу');
+        });
+    }
+}
+</script>
+{% endblock %}

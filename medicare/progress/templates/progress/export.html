@@ -1,0 +1,253 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Експорт даних прогресу{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Експорт даних прогресу</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'progress:progress_dashboard' %}">Прогрес</a></li>
+                    <li class="breadcrumb-item active">Експорт</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-download text-primary me-2"></i>
+                        Експорт даних
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-file-earmark me-1"></i>
+                                Формат експорту
+                            </label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-2" style="cursor: pointer;" onclick="selectFormat('pdf')">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">PDF</h6>
+                                            <small class="text-muted">Звіт для друку</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-2" style="cursor: pointer;" onclick="selectFormat('excel')">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-file-earmark-excel text-success" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">Excel</h6>
+                                            <small class="text-muted">Для аналізу даних</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-2" style="cursor: pointer;" onclick="selectFormat('csv')">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-file-earmark-text text-info" style="font-size: 2rem;"></i>
+                                            <h6 class="mt-2">CSV</h6>
+                                            <small class="text-muted">Необроблені дані</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="format" id="format" value="">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-range me-1"></i>
+                                Період даних
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="start_date" class="form-label">Дата початку</label>
+                                    <input type="date" class="form-control" name="start_date" id="start_date">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="end_date" class="form-label">Дата закінчення</label>
+                                    <input type="date" class="form-control" name="end_date" id="end_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-check2-square me-1"></i>
+                                Дані для включення
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_sessions" id="include_sessions" checked>
+                                        <label class="form-check-label" for="include_sessions">
+                                            Сеанси тренувань
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_exercises" id="include_exercises" checked>
+                                        <label class="form-check-label" for="include_exercises">
+                                            Виконання вправ
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_photos" id="include_photos">
+                                        <label class="form-check-label" for="include_photos">
+                                            Фото прогресу
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="include_notes" id="include_notes">
+                                        <label class="form-check-label" for="include_notes">
+                                            Нотатки лікаря
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if request.user.user_type == 'doctor' or request.user.user_type == 'admin' %}
+                        <div class="mb-4">
+                            <label for="patient_select" class="form-label">
+                                <i class="bi bi-person me-1"></i>
+                                Пацієнт (залиште порожнім для всіх)
+                            </label>
+                            <select class="form-control" name="patient_id" id="patient_select">
+                                <option value="">Всі пацієнти</option>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.id }}">{{ patient.user.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'progress:progress_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="export-btn" disabled>
+                                <i class="bi bi-download me-1"></i>
+                                <span id="export-text">Експортувати дані</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle text-info me-2"></i>
+                        Інформація про експорт
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>PDF</h6>
+                            <p class="small text-muted">Детальний звіт з графіками та діаграмами, готовий для друку або надсилання.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Excel</h6>
+                            <p class="small text-muted">Структуровані дані в таблицях Excel для подальшого аналізу та обробки.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>CSV</h6>
+                            <p class="small text-muted">Необроблені дані у форматі CSV для імпорту в інші системи.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectFormat(format) {
+    // Remove selected state from all cards
+    document.querySelectorAll('.card.border-2').forEach(card => {
+        card.classList.remove('border-primary', 'bg-light');
+    });
+    
+    // Add selected state to clicked card
+    event.currentTarget.classList.add('border-primary', 'bg-light');
+    
+    // Set hidden input value
+    document.getElementById('format').value = format;
+    
+    // Enable export button
+    document.getElementById('export-btn').disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date range (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('end_date').value = today.toISOString().split('T')[0];
+    document.getElementById('start_date').value = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    // Handle form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const exportBtn = document.getElementById('export-btn');
+        const exportText = document.getElementById('export-text');
+        const originalText = exportText.textContent;
+        
+        // Show loading state
+        exportBtn.disabled = true;
+        exportText.textContent = 'Експортується...';
+        
+        // Submit form via fetch
+        fetch(this.action || window.location.href, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                exportText.textContent = 'Готово!';
+                setTimeout(() => {
+                    exportText.textContent = originalText;
+                    exportBtn.disabled = false;
+                }, 2000);
+                
+                // Show alert with details
+                alert(`${data.message}\nФормат: ${data.format}\nПеріод: ${data.period}`);
+            } else {
+                throw new Error(data.message || 'Помилка експорту');
+            }
+        })
+        .catch(error => {
+            console.error('Export error:', error);
+            alert('Помилка при експорті даних: ' + error.message);
+            exportText.textContent = originalText;
+            exportBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

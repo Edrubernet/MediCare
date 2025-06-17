@@ -1,0 +1,322 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ user_detail.get_full_name }} - Деталі користувача{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">{{ user_detail.get_full_name }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'staff:user_list' %}">Користувачі</a></li>
+                    <li class="breadcrumb-item active">{{ user_detail.get_full_name }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{% url 'staff:user_edit' user_detail.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Редагувати
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Profile -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if user_detail.profile_image %}
+                        <img src="{{ user_detail.profile_image.url }}" class="rounded-circle mb-3" 
+                             alt="{{ user_detail.get_full_name }}" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <span class="text-white fw-bold" style="font-size: 1.5rem;">
+                                {{ user_detail.first_name|first }}{{ user_detail.last_name|first }}
+                            </span>
+                        </div>
+                    {% endif %}
+                    
+                    <h5 class="mb-1">{{ user_detail.get_full_name }}</h5>
+                    {% if user_detail.patronymic %}
+                        <p class="text-muted mb-2">{{ user_detail.patronymic }}</p>
+                    {% endif %}
+                    
+                    <span class="badge bg-{% if user_detail.user_type == 'admin' %}danger{% elif user_detail.user_type == 'doctor' %}primary{% else %}info{% endif %} mb-2">
+                        {{ user_detail.get_user_type_display }}
+                    </span>
+                    <br>
+                    {% if user_detail.is_active %}
+                        <span class="badge bg-success">Активний</span>
+                    {% else %}
+                        <span class="badge bg-danger">Неактивний</span>
+                    {% endif %}
+                    
+                    {% if user_detail.account_locked_until %}
+                        <br><span class="badge bg-warning mt-1">Заблокований до {{ user_detail.account_locked_until|date:"d.m.Y H:i" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Security Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-shield-check text-success me-2"></i>
+                        Безпека
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Невдалі спроби входу:</small>
+                        <span class="float-end">{{ user_detail.failed_login_attempts }}</span>
+                    </div>
+                    {% if user_detail.last_password_change %}
+                        <div class="mb-2">
+                            <small class="text-muted">Останя зміна пароля:</small>
+                            <span class="float-end">{{ user_detail.last_password_change|date:"d.m.Y" }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="mb-0">
+                        <small class="text-muted">Обов'язкова зміна пароля:</small>
+                        <span class="float-end">
+                            {% if user_detail.must_change_password %}
+                                <i class="bi bi-check-circle text-success"></i>
+                            {% else %}
+                                <i class="bi bi-x-circle text-muted"></i>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person text-primary me-2"></i>
+                        Основна інформація
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Ім'я користувача:</strong><br>
+                                <span class="text-muted">{{ user_detail.username }}</span>
+                            </p>
+                            <p class="mb-2">
+                                <strong>Email:</strong><br>
+                                <span class="text-muted">{{ user_detail.email }}</span>
+                            </p>
+                            {% if user_detail.phone_number %}
+                                <p class="mb-2">
+                                    <strong>Телефон:</strong><br>
+                                    <span class="text-muted">{{ user_detail.phone_number }}</span>
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Дата реєстрації:</strong><br>
+                                <span class="text-muted">{{ user_detail.date_joined|date:"d.m.Y H:i" }}</span>
+                            </p>
+                            <p class="mb-2">
+                                <strong>Останній вхід:</strong><br>
+                                <span class="text-muted">
+                                    {% if user_detail.last_login %}
+                                        {{ user_detail.last_login|date:"d.m.Y H:i" }}
+                                    {% else %}
+                                        Ніколи
+                                    {% endif %}
+                                </span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Медичні дані зашифровані:</strong><br>
+                                <span class="text-muted">
+                                    {% if user_detail.is_medical_data_encrypted %}
+                                        <i class="bi bi-shield-lock text-success"></i> Так
+                                    {% else %}
+                                        <i class="bi bi-shield-x text-warning"></i> Ні
+                                    {% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-key text-warning me-2"></i>
+                        Дозволи та права
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold">Статус персоналу:</label>
+                                <div>
+                                    {% if user_detail.is_staff %}
+                                        <span class="badge bg-success">Персонал</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Звичайний користувач</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold">Суперкористувач:</label>
+                                <div>
+                                    {% if user_detail.is_superuser %}
+                                        <span class="badge bg-danger">Суперкористувач</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Ні</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            {% if user_detail.user_permissions.exists %}
+                                <label class="fw-bold">Індивідуальні дозволи:</label>
+                                <ul class="list-unstyled">
+                                    {% for permission in user_detail.user_permissions.all %}
+                                        <li class="mb-1">
+                                            <span class="badge bg-info">{{ permission.name }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Type Specific Information -->
+            {% if user_detail.user_type == 'doctor' and user_detail.staff_profile %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-briefcase text-info me-2"></i>
+                            Профіль співробітника
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>Спеціалізація:</strong><br>
+                            <span class="text-muted">{{ user_detail.staff_profile.specialization|default:"Не вказано" }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Кількість пацієнтів:</strong><br>
+                            <span class="badge bg-secondary">{{ user_detail.staff_profile.patients.count }}</span>
+                        </p>
+                        <div class="mt-3">
+                            <a href="{% url 'staff:staff_profile_detail' user_detail.staff_profile.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Переглянути профіль
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if user_detail.user_type == 'patient' and user_detail.patient_profile %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-heart-pulse text-danger me-2"></i>
+                            Профіль пацієнта
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if user_detail.patient_profile.date_of_birth %}
+                            <p class="mb-2">
+                                <strong>Дата народження:</strong><br>
+                                <span class="text-muted">{{ user_detail.patient_profile.date_of_birth|date:"d.m.Y" }}</span>
+                            </p>
+                        {% endif %}
+                        {% if user_detail.patient_profile.gender %}
+                            <p class="mb-2">
+                                <strong>Стать:</strong><br>
+                                <span class="text-muted">{{ user_detail.patient_profile.get_gender_display }}</span>
+                            </p>
+                        {% endif %}
+                        <p class="mb-2">
+                            <strong>Призначені лікарі:</strong><br>
+                            <span class="badge bg-secondary">{{ user_detail.patient_profile.assigned_doctors.count }}</span>
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear text-secondary me-2"></i>
+                        Дії
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'staff:user_edit' user_detail.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Редагувати
+                        </a>
+                        
+                        {% if user_detail.is_active %}
+                            <button class="btn btn-sm btn-warning" onclick="toggleUserStatus({{ user_detail.pk }}, false)">
+                                <i class="bi bi-pause"></i> Деактивувати
+                            </button>
+                        {% else %}
+                            <button class="btn btn-sm btn-success" onclick="toggleUserStatus({{ user_detail.pk }}, true)">
+                                <i class="bi bi-play"></i> Активувати
+                            </button>
+                        {% endif %}
+                        
+                        {% if user_detail.account_locked_until %}
+                            <button class="btn btn-sm btn-info" onclick="unlockUser({{ user_detail.pk }})">
+                                <i class="bi bi-unlock"></i> Розблокувати
+                            </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-sm btn-outline-warning" onclick="resetPassword({{ user_detail.pk }})">
+                            <i class="bi bi-key"></i> Скинути пароль
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleUserStatus(userId, activate) {
+    const action = activate ? 'активувати' : 'деактивувати';
+    if (confirm(`Ви впевнені, що хочете ${action} цього користувача?`)) {
+        // Тут можна додати AJAX запит для зміни статусу
+        alert(`Функція зміни статусу буде реалізована`);
+    }
+}
+
+function unlockUser(userId) {
+    if (confirm('Розблокувати цього користувача?')) {
+        // Тут можна додати AJAX запит для розблокування
+        alert('Функція розблокування буде реалізована');
+    }
+}
+
+function resetPassword(userId) {
+    if (confirm('Скинути пароль для цього користувача?')) {
+        // Тут можна додати AJAX запит для скидання пароля
+        alert('Функція скидання пароля буде реалізована');
+    }
+}
+</script>
+{% endblock %}

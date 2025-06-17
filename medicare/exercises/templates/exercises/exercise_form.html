@@ -1,0 +1,451 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Редагувати вправу{% else %}Створити вправу{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                {% if object %}Редагувати вправу: {{ object.title }}{% else %}Створити нову вправу{% endif %}
+            </h4>
+            <a href="{% url 'exercises:exercise_library' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Назад до бібліотеки
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="exerciseForm">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <!-- Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Основна інформація</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">Назва вправи *</label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger">{{ form.title.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">Опис *</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.instructions.id_for_label }}" class="form-label">Загальні інструкції виконання *</label>
+                                    {{ form.instructions }}
+                                    {% if form.instructions.errors %}
+                                        <div class="text-danger">{{ form.instructions.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Загальний опис вправи. Детальні кроки можна додати нижче.</div>
+                                </div>
+                                
+                                <!-- Exercise Steps Section -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <label class="form-label">Покроковий опис виконання</label>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="addStepBtn">
+                                            <i class="fas fa-plus"></i> Додати крок
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="exerciseSteps">
+                                        {% if existing_steps %}
+                                            {% for step in existing_steps %}
+                                                <div class="exercise-step border rounded p-3 mb-3" data-step="{{ forloop.counter0 }}">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="mb-0">Крок {{ forloop.counter }}</h6>
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-step">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-8">
+                                                            <textarea name="step_{{ forloop.counter0 }}_instruction" 
+                                                                      class="form-control" 
+                                                                      rows="3" 
+                                                                      placeholder="Опишіть цей крок детально..."
+                                                                      required>{{ step.instruction }}</textarea>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <input type="file" 
+                                                                   name="step_{{ forloop.counter0 }}_image" 
+                                                                   class="form-control" 
+                                                                   accept="image/*">
+                                                            <div class="form-text">Фото кроку (опціонально)</div>
+                                                            {% if step.image %}
+                                                                <div class="mt-2">
+                                                                    <img src="{{ step.image.url }}" alt="Step {{ forloop.counter }}" 
+                                                                         class="img-thumbnail" style="max-width: 80px;">
+                                                                    <div class="form-text text-success">
+                                                                        <i class="fas fa-check"></i> Поточне фото
+                                                                    </div>
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="alert alert-info" id="stepsHelpText" {% if existing_steps %}style="display: none;"{% endif %}>
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Підказка:</strong> Додайте покрокові інструкції для кращого розуміння вправи. 
+                                        До кожного кроку можна прикріпити фото для наочності.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.precautions.id_for_label }}" class="form-label">Застереження</label>
+                                    {{ form.precautions }}
+                                    {% if form.precautions.errors %}
+                                        <div class="text-danger">{{ form.precautions.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Media Files -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Медіа файли</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.video.id_for_label }}" class="form-label">
+                                                Відео вправи
+                                                <small class="text-muted">(макс. 100MB)</small>
+                                            </label>
+                                            {{ form.video }}
+                                            {% if form.video.errors %}
+                                                <div class="text-danger">{{ form.video.errors.0 }}</div>
+                                            {% endif %}
+                                            {% if object.video %}
+                                                <div class="mt-2">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-check"></i> Поточне відео: {{ object.video.name }}
+                                                    </small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.video_thumbnail.id_for_label }}" class="form-label">
+                                                Мініатюра відео
+                                                <small class="text-muted">(макс. 5MB)</small>
+                                            </label>
+                                            {{ form.video_thumbnail }}
+                                            {% if form.video_thumbnail.errors %}
+                                                <div class="text-danger">{{ form.video_thumbnail.errors.0 }}</div>
+                                            {% endif %}
+                                            {% if object.video_thumbnail %}
+                                                <div class="mt-2">
+                                                    <img src="{{ object.video_thumbnail.url }}" 
+                                                         alt="Поточна мініатюра" 
+                                                         class="img-thumbnail" 
+                                                         style="max-width: 100px;">
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sidebar -->
+                    <div class="col-md-4">
+                        <!-- Categories and Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Категорії та налаштування</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.difficulty.id_for_label }}" class="form-label">Рівень складності</label>
+                                    {{ form.difficulty }}
+                                    {% if form.difficulty.errors %}
+                                        <div class="text-danger">{{ form.difficulty.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Частини тіла</label>
+                                    <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                        {% for choice in form.body_parts %}
+                                            <div class="form-check">
+                                                {{ choice.tag }}
+                                                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                    {{ choice.choice_label }}
+                                                </label>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted text-center py-3">
+                                                <small>Немає доступних частин тіла.<br>
+                                                <a href="/admin/exercises/bodypart/" target="_blank">Додати частини тіла в адмін панелі</a></small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.body_parts.errors %}
+                                        <div class="text-danger">{{ form.body_parts.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Категорії</label>
+                                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                                        {% for choice in form.categories %}
+                                            <div class="form-check">
+                                                {{ choice.tag }}
+                                                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                    {{ choice.choice_label }}
+                                                </label>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted text-center py-3">
+                                                <small>Немає доступних категорій.<br>
+                                                <a href="/admin/exercises/exercisecategory/" target="_blank">Додати категорії в адмін панелі</a></small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if form.categories.errors %}
+                                        <div class="text-danger">{{ form.categories.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-check">
+                                    {{ form.is_public }}
+                                    <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                        Публічна вправа
+                                    </label>
+                                    <div class="form-text">
+                                        Публічні вправи доступні всім лікарям
+                                    </div>
+                                    {% if form.is_public.errors %}
+                                        <div class="text-danger">{{ form.is_public.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Дії</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> 
+                                        {% if object %}Зберегти зміни{% else %}Створити вправу{% endif %}
+                                    </button>
+                                    
+                                    {% if not object %}
+                                        <button type="submit" name="action" value="save_and_add" class="btn btn-success">
+                                            <i class="fas fa-plus"></i> Зберегти та додати ще
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'exercises:exercise_library' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Скасувати
+                                    </a>
+                                    
+                                    {% if object %}
+                                        <hr>
+                                        <a href="{% url 'exercises:exercise_detail' object.id %}" 
+                                           class="btn btn-outline-info">
+                                            <i class="fas fa-eye"></i> Переглянути
+                                        </a>
+                                        <a href="{% url 'exercises:exercise_delete' object.id %}" 
+                                           class="btn btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Видалити
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('exerciseForm');
+    const videoInput = document.getElementById('{{ form.video.id_for_label }}');
+    const thumbnailInput = document.getElementById('{{ form.video_thumbnail.id_for_label }}');
+    const addStepBtn = document.getElementById('addStepBtn');
+    const exerciseStepsContainer = document.getElementById('exerciseSteps');
+    const stepsHelpText = document.getElementById('stepsHelpText');
+    
+    let stepCounter = {{ existing_steps|length|default:0 }};
+    
+    // File size validation
+    function validateFileSize(input, maxSizeMB) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const maxSizeBytes = maxSizeMB * 1024 * 1024;
+            
+            if (file.size > maxSizeBytes) {
+                alert(`Файл занадто великий. Максимальний розмір: ${maxSizeMB}MB`);
+                input.value = '';
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Add new exercise step
+    function addExerciseStep() {
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'exercise-step border rounded p-3 mb-3';
+        stepDiv.setAttribute('data-step', stepCounter);
+        
+        stepDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">Крок ${stepCounter + 1}</h6>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-step">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <textarea name="step_${stepCounter}_instruction" 
+                              class="form-control" 
+                              rows="3" 
+                              placeholder="Опишіть цей крок детально..."
+                              required></textarea>
+                </div>
+                <div class="col-md-4">
+                    <input type="file" 
+                           name="step_${stepCounter}_image" 
+                           class="form-control" 
+                           accept="image/*">
+                    <div class="form-text">Фото кроку (опціонально)</div>
+                </div>
+            </div>
+        `;
+        
+        exerciseStepsContainer.appendChild(stepDiv);
+        stepCounter++;
+        
+        // Hide help text when steps are added
+        if (stepsHelpText) {
+            stepsHelpText.style.display = 'none';
+        }
+        
+        // Add event listener for the remove button
+        const removeBtn = stepDiv.querySelector('.remove-step');
+        removeBtn.addEventListener('click', function() {
+            removeExerciseStep(stepDiv);
+        });
+        
+        // Add file validation for the image input
+        const imageInput = stepDiv.querySelector('input[type="file"]');
+        imageInput.addEventListener('change', function() {
+            validateFileSize(this, 5);
+        });
+        
+        // Focus on the new textarea
+        const textarea = stepDiv.querySelector('textarea');
+        textarea.focus();
+    }
+    
+    // Remove exercise step
+    function removeExerciseStep(stepDiv) {
+        stepDiv.remove();
+        updateStepNumbers();
+        
+        // Show help text if no steps remain
+        const remainingSteps = exerciseStepsContainer.querySelectorAll('.exercise-step');
+        if (remainingSteps.length === 0 && stepsHelpText) {
+            stepsHelpText.style.display = 'block';
+        }
+    }
+    
+    // Update step numbers after removal
+    function updateStepNumbers() {
+        const steps = exerciseStepsContainer.querySelectorAll('.exercise-step');
+        steps.forEach((step, index) => {
+            // Update step number display
+            const stepTitle = step.querySelector('h6');
+            stepTitle.textContent = `Крок ${index + 1}`;
+            
+            // Update form field names
+            const textarea = step.querySelector('textarea');
+            const fileInput = step.querySelector('input[type="file"]');
+            
+            textarea.name = `step_${index}_instruction`;
+            fileInput.name = `step_${index}_image`;
+            
+            step.setAttribute('data-step', index);
+        });
+        
+        stepCounter = steps.length;
+    }
+    
+    // Event listeners
+    if (addStepBtn) {
+        addStepBtn.addEventListener('click', addExerciseStep);
+    }
+    
+    // Add event listeners for existing remove buttons
+    document.querySelectorAll('.remove-step').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const stepDiv = this.closest('.exercise-step');
+            removeExerciseStep(stepDiv);
+        });
+    });
+    
+    // Video file validation
+    if (videoInput) {
+        videoInput.addEventListener('change', function() {
+            validateFileSize(this, 100);
+        });
+    }
+    
+    // Thumbnail validation
+    if (thumbnailInput) {
+        thumbnailInput.addEventListener('change', function() {
+            validateFileSize(this, 5);
+        });
+    }
+    
+    // Existing step image validation
+    document.querySelectorAll('input[name*="_image"]').forEach(input => {
+        input.addEventListener('change', function() {
+            validateFileSize(this, 5);
+        });
+    });
+    
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        const submitButton = document.activeElement;
+        if (submitButton && submitButton.name === 'action') {
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Збереження...';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+
+{% block title %}Medicare - Система реабілітації{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold">Сучасна система для реабілітації пацієнтів</h1>
+            <p class="lead">Medicare - цифрова платформа для ефективної реабілітації та моніторингу прогресу пацієнтів.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                {% if user.is_authenticated %}
+                    <a href="{% url ':dashboard' %}" class="btn btn-primary btn-lg px-4 me-md-2">Панель керування</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 me-md-2">Увійти</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg px-4">Зареєструватися</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-6 mt-5 mt-lg-0">
+            <img src="{% static 'frontend/img/medicare.png' %}" class="img-fluid rounded" alt="Medicare System">
+        </div>
+    </div>
+    
+    <div class="row py-5">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold mb-4">Переваги нашої системи</h2>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Для лікарів</h3>
+                    <p class="card-text">Зручний інтерфейс для створення програм реабілітації та моніторингу прогресу пацієнтів.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-user fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Для пацієнтів</h3>
+                    <p class="card-text">Доступ до програм реабілітації, відстеження прогресу та зв'язок з лікарями.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Для моніторингу</h3>
+                    <p class="card-text">Детальна аналітика та відстеження прогресу реабілітації в реальному часі.</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

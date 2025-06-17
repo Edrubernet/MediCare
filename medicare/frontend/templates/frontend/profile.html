@@ -1,0 +1,611 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Мій профіль - Medicare{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="https://via.placeholder.com/150" alt="avatar" class="rounded-circle img-fluid" style="width: 150px;">
+                    <h5 class="my-3" id="user-full-name">Ім'я Прізвище</h5>
+                    <p class="text-muted mb-1" id="user-role">Роль користувача</p>
+                    <p class="text-muted mb-4" id="user-status">Статус</p>
+                    <div class="d-flex justify-content-center mb-2">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            Редагувати профіль
+                        </button>
+                        <button type="button" class="btn btn-outline-primary ms-1" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            Змінити пароль
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4 mb-lg-0">
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush rounded-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <i class="fas fa-globe fa-lg text-warning"></i>
+                            <p class="mb-0" id="user-email">email@example.com</p>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <i class="fas fa-phone fa-lg text-danger"></i>
+                            <p class="mb-0" id="user-phone">+380XXXXXXXX</p>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <i class="fas fa-calendar fa-lg text-info"></i>
+                            <p class="mb-0" id="user-birthday">01.01.1990</p>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <i class="fas fa-user fa-lg text-primary"></i>
+                            <p class="mb-0" id="user-username">username</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Блок для лікаря -->
+            <div id="doctor-info-block" class="d-none">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Спеціалізація</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0" id="doctor-specialization">Спеціалізація лікаря</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Кваліфікація</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0" id="doctor-qualification">Кваліфікація лікаря</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Досвід роботи</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0"><span id="doctor-experience">0</span> років</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Біографія</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0" id="doctor-bio">Біографія лікаря</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Статистика</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h3 id="doctor-patients-count">0</h3>
+                                        <p class="text-muted">Пацієнтів</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h3 id="doctor-programs-count">0</h3>
+                                        <p class="text-muted">Програм</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center mb-3">
+                                    <div class="card-body">
+                                        <h3 id="doctor-consultations-count">0</h3>
+                                        <p class="text-muted">Консультацій</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Блок для пацієнта -->
+            <div id="patient-info-block" class="d-none">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Історія захворювання</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0" id="patient-medical-history">Історія захворювання</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Екстрений контакт</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <p class="text-muted mb-0" id="patient-emergency-contact">Екстрений контакт</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Мої лікарі</h5>
+                        <a href="{% url 'frontend:my_doctors' %}" class="btn btn-sm btn-outline-primary">Усі лікарі</a>
+                    </div>
+                    <div class="card-body">
+                        <div id="patient-doctors" class="row">
+                            <p class="text-center">Завантаження...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Поточні програми</h5>
+                        <a href="{% url 'frontend:my_programs' %}" class="btn btn-sm btn-outline-primary">Усі програми</a>
+                    </div>
+                    <div class="card-body">
+                        <div id="patient-programs">
+                            <p class="text-center">Завантаження...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно для редагування профілю -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редагування профілю</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-profile-form">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-first-name" class="form-label">Ім'я</label>
+                            <input type="text" class="form-control" id="edit-first-name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-last-name" class="form-label">Прізвище</label>
+                            <input type="text" class="form-control" id="edit-last-name" name="last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-phone" class="form-label">Телефон</label>
+                        <input type="tel" class="form-control" id="edit-phone" name="phone">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-date-of-birth" class="form-label">Дата народження</label>
+                        <input type="date" class="form-control" id="edit-date-of-birth" name="date_of_birth">
+                    </div>
+                    
+                    <!-- Додаткові поля для лікаря -->
+                    <div id="edit-doctor-fields" class="d-none">
+                        <hr>
+                        <h5>Інформація про лікаря</h5>
+                        
+                        <div class="mb-3">
+                            <label for="edit-specialization" class="form-label">Спеціалізація</label>
+                            <input type="text" class="form-control" id="edit-specialization" name="specialization">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-qualification" class="form-label">Кваліфікація</label>
+                            <input type="text" class="form-control" id="edit-qualification" name="qualification">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-experience" class="form-label">Досвід роботи (років)</label>
+                            <input type="number" class="form-control" id="edit-experience" name="experience" min="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-bio" class="form-label">Біографія</label>
+                            <textarea class="form-control" id="edit-bio" name="bio" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Додаткові поля для пацієнта -->
+                    <div id="edit-patient-fields" class="d-none">
+                        <hr>
+                        <h5>Інформація про пацієнта</h5>
+                        
+                        <div class="mb-3">
+                            <label for="edit-medical-history" class="form-label">Історія захворювання</label>
+                            <textarea class="form-control" id="edit-medical-history" name="medical_history" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-emergency-contact" class="form-label">Екстрений контакт</label>
+                            <input type="text" class="form-control" id="edit-emergency-contact" name="emergency_contact">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальне вікно для зміни пароля -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Зміна пароля</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="change-password-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="current-password" class="form-label">Поточний пароль</label>
+                        <input type="password" class="form-control" id="current-password" name="current_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new-password" class="form-label">Новий пароль</label>
+                        <input type="password" class="form-control" id="new-password" name="new_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm-password" class="form-label">Підтвердження нового пароля</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirm_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Змінити пароль</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Завантаження даних профілю
+        loadUserProfile();
+        
+        // Обробка форми редагування профілю
+        $('#edit-profile-form').submit(function(e) {
+            e.preventDefault();
+            updateProfile();
+        });
+        
+        // Обробка форми зміни пароля
+        $('#change-password-form').submit(function(e) {
+            e.preventDefault();
+            changePassword();
+        });
+    });
+    
+    // Завантаження профілю користувача
+    function loadUserProfile() {
+        // Запит для отримання даних користувача
+        apiRequest('/api/auth/users/me/')
+            .then(userData => {
+                // Заповнення основних даних користувача
+                $('#user-full-name').text(userData.first_name + ' ' + userData.last_name);
+                $('#user-email').text(userData.email || 'Не вказано');
+                $('#user-phone').text(userData.phone || 'Не вказано');
+                $('#user-birthday').text(userData.date_of_birth ? formatDate(userData.date_of_birth) : 'Не вказано');
+                $('#user-username').text(userData.username);
+                
+                // Заповнення полів форми редагування
+                $('#edit-first-name').val(userData.first_name);
+                $('#edit-last-name').val(userData.last_name);
+                $('#edit-email').val(userData.email);
+                $('#edit-phone').val(userData.phone);
+                $('#edit-date-of-birth').val(userData.date_of_birth);
+                
+                // Відображення відповідних блоків в залежності від типу користувача
+                if (userData.user_type === 'doctor') {
+                    $('#user-role').text('Лікар');
+                    $('#doctor-info-block').removeClass('d-none');
+                    $('#edit-doctor-fields').removeClass('d-none');
+                    
+                    // Завантаження даних лікаря
+                    loadDoctorProfile();
+                } else if (userData.user_type === 'patient') {
+                    $('#user-role').text('Пацієнт');
+                    $('#patient-info-block').removeClass('d-none');
+                    $('#edit-patient-fields').removeClass('d-none');
+                    
+                    // Завантаження даних пацієнта
+                    loadPatientProfile();
+                } else {
+                    $('#user-role').text('Адміністратор');
+                }
+                
+                $('#user-status').text('Активний');
+            })
+            .catch(error => {
+                console.error('Error loading user profile:', error);
+                alert('Помилка завантаження профілю');
+            });
+    }
+    
+    // Завантаження профілю лікаря
+    function loadDoctorProfile() {
+        apiRequest('/api/staff/profiles/')
+            .then(response => {
+                if (response.results && response.results.length > 0) {
+                    const doctorProfile = response.results[0];
+                    
+                    // Заповнення даних лікаря
+                    $('#doctor-specialization').text(doctorProfile.specialization || 'Не вказано');
+                    $('#doctor-qualification').text(doctorProfile.qualification || 'Не вказано');
+                    $('#doctor-experience').text(doctorProfile.experience || '0');
+                    $('#doctor-bio').text(doctorProfile.bio || 'Не вказано');
+                    
+                    // Заповнення полів форми редагування
+                    $('#edit-specialization').val(doctorProfile.specialization);
+                    $('#edit-qualification').val(doctorProfile.qualification);
+                    $('#edit-experience').val(doctorProfile.experience);
+                    $('#edit-bio').val(doctorProfile.bio);
+                    
+                    // Завантаження статистики
+                    $('#doctor-patients-count').text(doctorProfile.patients_count || 0);
+                    $('#doctor-programs-count').text(doctorProfile.programs_count || 0);
+                    $('#doctor-consultations-count').text(doctorProfile.consultations_count || 0);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading doctor profile:', error);
+            });
+    }
+    
+    // Завантаження профілю пацієнта
+    function loadPatientProfile() {
+        apiRequest('/api/patients/profiles/')
+            .then(response => {
+                if (response.results && response.results.length > 0) {
+                    const patientProfile = response.results[0];
+                    
+                    // Заповнення даних пацієнта
+                    $('#patient-medical-history').text(patientProfile.medical_history || 'Не вказано');
+                    $('#patient-emergency-contact').text(patientProfile.emergency_contact || 'Не вказано');
+                    
+                    // Заповнення полів форми редагування
+                    $('#edit-medical-history').val(patientProfile.medical_history);
+                    $('#edit-emergency-contact').val(patientProfile.emergency_contact);
+                    
+                    // Завантаження лікарів пацієнта
+                    if (patientProfile.assigned_doctors && patientProfile.assigned_doctors.length > 0) {
+                        let doctorsHtml = '';
+                        
+                        patientProfile.assigned_doctors.forEach(doctor => {
+                            doctorsHtml += `
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${doctor.full_name}</h5>
+                                            <h6 class="card-subtitle mb-2 text-muted">${doctor.specialization || 'Лікар'}</h6>
+                                            <p class="card-text small">${doctor.bio || 'Немає інформації'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        $('#patient-doctors').html(doctorsHtml);
+                    } else {
+                        $('#patient-doctors').html('<p class="text-center">У вас ще немає призначених лікарів</p>');
+                    }
+                    
+                    // Завантаження програм пацієнта
+                    loadPatientPrograms(patientProfile.id);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading patient profile:', error);
+            });
+    }
+    
+    // Завантаження програм пацієнта
+    function loadPatientPrograms(patientId) {
+        apiRequest(`/api/patients/profiles/${patientId}/programs/`)
+            .then(programs => {
+                if (programs.length > 0) {
+                    let programsHtml = '<div class="list-group">';
+                    
+                    programs.slice(0, 3).forEach(program => {
+                        const startDate = formatDate(program.start_date);
+                        const endDate = formatDate(program.end_date);
+                        
+                        programsHtml += `
+                            <a href="{% url 'frontend:program_detail' 0 %}".replace('0', program.id) class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">${program.title}</h5>
+                                    <span class="badge bg-${program.status === 'active' ? 'success' : 'secondary'}">${program.status === 'active' ? 'Активна' : 'Неактивна'}</span>
+                                </div>
+                                <p class="mb-1">${program.description || 'Немає опису'}</p>
+                                <small>Період: ${startDate} - ${endDate}</small>
+                            </a>
+                        `;
+                    });
+                    
+                    programsHtml += '</div>';
+                    
+                    if (programs.length > 3) {
+                        programsHtml += `
+                            <div class="text-center mt-3">
+                                <a href="{% url 'frontend:my_programs' %}" class="btn btn-sm btn-outline-primary">Показати всі (${programs.length})</a>
+                            </div>
+                        `;
+                    }
+                    
+                    $('#patient-programs').html(programsHtml);
+                } else {
+                    $('#patient-programs').html('<p class="text-center">У вас ще немає програм реабілітації</p>');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading patient programs:', error);
+                $('#patient-programs').html('<p class="text-center">Помилка завантаження програм</p>');
+            });
+    }
+    
+    // Оновлення профілю
+    function updateProfile() {
+        const userData = {
+            first_name: $('#edit-first-name').val(),
+            last_name: $('#edit-last-name').val(),
+            email: $('#edit-email').val(),
+            phone: $('#edit-phone').val(),
+            date_of_birth: $('#edit-date-of-birth').val()
+        };
+        
+        // Оновлення профілю користувача
+        apiRequest('/api/auth/users/me/', 'PATCH', userData)
+            .then(response => {
+                // Перевірка типу користувача і оновлення додаткової інформації
+                if ($('#edit-doctor-fields').is(':visible')) {
+                    updateDoctorProfile();
+                } else if ($('#edit-patient-fields').is(':visible')) {
+                    updatePatientProfile();
+                } else {
+                    showSuccessMessage('Профіль успішно оновлено');
+                    loadUserProfile();
+                    $('#editProfileModal').modal('hide');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating user profile:', error);
+                showErrorMessage('Помилка оновлення профілю');
+            });
+    }
+    
+    // Оновлення профілю лікаря
+    function updateDoctorProfile() {
+        const doctorData = {
+            specialization: $('#edit-specialization').val(),
+            qualification: $('#edit-qualification').val(),
+            experience: $('#edit-experience').val(),
+            bio: $('#edit-bio').val()
+        };
+        
+        apiRequest('/api/staff/profiles/', 'PATCH', doctorData)
+            .then(response => {
+                showSuccessMessage('Профіль успішно оновлено');
+                loadUserProfile();
+                $('#editProfileModal').modal('hide');
+            })
+            .catch(error => {
+                console.error('Error updating doctor profile:', error);
+                showErrorMessage('Помилка оновлення профілю лікаря');
+            });
+    }
+    
+    // Оновлення профілю пацієнта
+    function updatePatientProfile() {
+        const patientData = {
+            medical_history: $('#edit-medical-history').val(),
+            emergency_contact: $('#edit-emergency-contact').val()
+        };
+        
+        apiRequest('/api/patients/profiles/', 'PATCH', patientData)
+            .then(response => {
+                showSuccessMessage('Профіль успішно оновлено');
+                loadUserProfile();
+                $('#editProfileModal').modal('hide');
+            })
+            .catch(error => {
+                console.error('Error updating patient profile:', error);
+                showErrorMessage('Помилка оновлення профілю пацієнта');
+            });
+    }
+    
+    // Зміна пароля
+    function changePassword() {
+        const currentPassword = $('#current-password').val();
+        const newPassword = $('#new-password').val();
+        const confirmPassword = $('#confirm-password').val();
+        
+        // Перевірка співпадіння паролів
+        if (newPassword !== confirmPassword) {
+            showErrorMessage('Новий пароль та підтвердження не співпадають');
+            return;
+        }
+        
+        const passwordData = {
+            current_password: currentPassword,
+            new_password: newPassword
+        };
+        
+        apiRequest('/api/auth/users/set_password/', 'POST', passwordData)
+            .then(response => {
+                showSuccessMessage('Пароль успішно змінено');
+                $('#changePasswordModal').modal('hide');
+                $('#change-password-form')[0].reset();
+            })
+            .catch(error => {
+                console.error('Error changing password:', error);
+                showErrorMessage('Помилка зміни пароля. Переконайтеся, що поточний пароль правильний.');
+            });
+    }
+    
+    // Форматування дати
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('uk-UA');
+    }
+    
+    // Показ повідомлення про успіх
+    function showSuccessMessage(message) {
+        $('.alert-container').html(`
+            <div class="alert alert-success alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        
+        // Автоматичне закриття повідомлення через 5 секунд
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+    
+    // Показ повідомлення про помилку
+    function showErrorMessage(message)
